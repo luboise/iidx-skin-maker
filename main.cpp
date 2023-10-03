@@ -1,5 +1,8 @@
 // wxWidgets "Hello World" Program
 
+#include <string>
+using std::string;
+
 // For compilers that support precompilation, includes "wx/wx.h".
 #include <wx/wxprec.h>
 
@@ -23,6 +26,8 @@ private:
 	void OnExit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnOpenNewContentsFolder(wxCommandEvent& event);
+
+	string contentsDirPath;
 };
 
 enum
@@ -89,6 +94,15 @@ void MainFrame::OnHello(wxCommandEvent& event)
 }
 
 void MainFrame::OnOpenNewContentsFolder(wxCommandEvent& event) {
-	wxFileCtrl();
-	wxLogMessage("i did it");
+	wxDirDialog
+		contentsDialog(this, "Select your IIDX Contents Folder");
+
+	if (contentsDialog.ShowModal() == wxID_CANCEL) {
+		this->contentsDirPath = "";
+		wxLogMessage("Folder not specified.");
+		return;
+	}
+
+	this->contentsDirPath = contentsDialog.GetPath();
+	wxLogMessage("%s", contentsDirPath);
 }
