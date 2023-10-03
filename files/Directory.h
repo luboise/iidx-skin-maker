@@ -14,9 +14,9 @@ public:
 	fs::path getPath() const;
 
 	void addFile(const fs::path& path);
-	void addSubdir(Directory& path);
+	void addSubdir(Directory* path);
 private:
 	fs::path path;
 	std::list<fs::path> files;
-	std::list<Directory> subdirs;
+	std::list<Directory*> subdirs;
 };

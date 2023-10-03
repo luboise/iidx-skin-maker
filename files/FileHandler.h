@@ -8,9 +8,9 @@
 
 class FileHandler {
 public:
-	static Directory getFileTree(string& baseDir);
+	static Directory* getFileTree(string& baseDir);
 private:
-	static void makeTreeRecursive(Directory& currentDir);
+	static void buildTreeRecursive(Directory* currentDir);
 };
 
 

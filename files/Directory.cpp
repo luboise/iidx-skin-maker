@@ -21,7 +21,10 @@ void Directory::addFile(const fs::path& path)
 	this->files.push_back(path);
 }
 
-void Directory::addSubdir(Directory& dir)
+void Directory::addSubdir(Directory* dir)
 {
+	if (dir == nullptr) {
+		throw std::logic_error("Received null directory.");
+	}
 	this->subdirs.push_back(dir);
 }
