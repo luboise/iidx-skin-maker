@@ -10,6 +10,8 @@ using std::string;
 #include <wx/wx.h>
 #endif
 
+#include "files/FileHandler.h"
+
 class MyApp : public wxApp
 {
 public:
@@ -71,6 +73,8 @@ MainFrame::MainFrame()
 	CreateStatusBar();
 	SetStatusText("Welcome to wxWidgets!");
 
+
+
 	Bind(wxEVT_MENU, &MainFrame::OnHello, this, ID_Hello);
 	Bind(wxEVT_MENU, &MainFrame::OnOpenNewContentsFolder, this, ID_NewContentsFolder);
 	Bind(wxEVT_MENU, &MainFrame::OnAbout, this, wxID_ABOUT);
@@ -103,5 +107,8 @@ void MainFrame::OnOpenNewContentsFolder(wxCommandEvent& event) {
 	}
 
 	this->contentsDirPath = contentsDialog.GetPath();
+
 	wxLogMessage("%s", contentsDirPath);
+	FileHandler::getFileTree(contentsDirPath);
 }
+
