@@ -89,5 +89,6 @@ void MainFrame::OnHello(wxCommandEvent& event)
 }
 
 void MainFrame::OnOpenNewContentsFolder(wxCommandEvent& event) {
-	wxLogMessage("test");
+	wxFileCtrl();
+	wxLogMessage("i did it");
 }
