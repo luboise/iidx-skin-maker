@@ -98,8 +98,7 @@ void MainFrame::OnOpenNewContentsFolder(wxCommandEvent& event) {
 		contentsDialog(this, "Select your IIDX Contents Folder");
 
 	if (contentsDialog.ShowModal() == wxID_CANCEL) {
-		this->contentsDirPath = "";
-		wxLogMessage("Folder not specified.");
+		wxLogMessage("Folder not specified. Keeping current folder.");
 		return;
 	}
 
