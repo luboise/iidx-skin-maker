@@ -44,6 +44,10 @@ bool MyApp::OnInit()
 {
 	MainFrame* frame = new MainFrame();
 	frame->Show(true);
+
+	string x = "/home/luboise/iidx-skin-maker/test/contents/data";
+	FileHandler::getFileTree(x);
+
 	return true;
 }
 

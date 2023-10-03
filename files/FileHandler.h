@@ -1,33 +1,18 @@
 #include <string>
-#include <filesystem>
-#include <vector>
 
-using std::string;
-using std::vector;
+#include "Directory.h"
+
+
+
+
 
 class FileHandler {
 public:
-	static void getFileTree(string& baseDir);
+	static Directory getFileTree(string& baseDir);
+private:
+	static void makeTreeRecursive(Directory& currentDir);
 };
 
-// template <typename T>
-// class AdjacencyList {
-// public:
-// 	AdjacencyList<T>() {
-
-// 	}
-// private:
-// 	AdjacencyNode<T> head*;
-// };
 
 
-// template <typename T>
-// class AdjacencyNode {
-// public:
-// 	AdjacencyNode() {
 
-// 	}
-// private:
-// 	T data;
-// 	vector<AdjacencyNode<T>>* children;
-// };
