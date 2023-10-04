@@ -17,14 +17,10 @@ endif()
 file(GLOB FILESYSTEM_SOURCES "files/*.cpp" "files/*.h")
 file(GLOB GUI_SOURCES "gui/*.cpp" "gui/*.h")
 
-
-add_executable(${CMAKE_PROJECT_NAME} main.cpp ${FILESYSTEM_SOURCES} ${GUI_SOURCES})
+add_executable(${PROJECT_NAME} main.cpp ${FILESYSTEM_SOURCES} ${GUI_SOURCES})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE gui file)
-target_link_libraries(${CMAKE_PROJECT_NAME} ${wxWidgets_LIBRARIES})
-
-
-
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES})
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
