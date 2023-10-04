@@ -2,6 +2,16 @@
 
 #include "../files/FileHandler.h"
 
+class ContentsTreeItemData : public wxTreeItemData {
+   public:
+	ContentsTreeItemData(const fs::path& filePath) : filePath(filePath) {}
+
+	fs::path GetFilePath() const { return filePath; }
+
+   private:
+	fs::path filePath;
+};
+
 MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Hello World") {
 	wxMenu* menuFile = new wxMenu;
 	menuFile->Append(ID_Hello, "&Hello...\tCtrl-H",
@@ -21,24 +31,10 @@ MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Hello World") {
 	mainBar->Append(menuHelp, "&Help");
 	SetMenuBar(mainBar);
 
+	// Build the contents tree
 	auto x = fs::path("/home/luboise/iidx-skin-maker/test/contents/data");
-	Directory* rootDir = FileHandler::scanDirectory(x);
-	this->contentsTree = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
-										wxSize(150, 500), wxTR_DEFAULT_STYLE);
-
-	auto rootItem = contentsTree->AddRoot("Root");
-	contentsTree->AppendItem(rootItem, "item1");
-	contentsTree->AppendItem(rootItem, "item2");
-	contentsTree->AppendItem(rootItem, "item3");
-	contentsTree->AppendItem(rootItem, "item4");
-
-	auto expandableItem = contentsTree->AppendItem(rootItem, "EXPANDABLE");
-	contentsTree->AppendItem(expandableItem, "subitem1");
-	contentsTree->AppendItem(expandableItem, "subitem2");
-	contentsTree->AppendItem(expandableItem, "subitem3");
-	contentsTree->AppendItem(expandableItem, "subitem4");
-
-	contentsTree->ExpandAll();
+	this->rootDir = FileHandler::scanDirectory(x);
+	this->BuildContentsTree();
 
 	CreateStatusBar();
 	SetStatusText("Welcome to wxWidgets!");
@@ -72,9 +68,10 @@ void MainFrame::OnOpenNewContentsFolder(wxCommandEvent& event) {
 	}
 
 	this->contentsDirPath = fs::path((string)contentsDialog.GetPath());
+	this->rootDir = FileHandler::scanDirectory(contentsDirPath);
+	this->BuildContentsTree();
 
-	wxLogMessage("%s", contentsDirPath.string());
-	FileHandler::scanDirectory(contentsDirPath);
+	contentsTree->ExpandAll();
 }
 
 void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
@@ -85,4 +82,35 @@ void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
 	} else {
 		throw std::logic_error("Invalid ID from clicked button");
 	}
+}
+
+void MainFrame::BuildContentsTree() {
+	this->ResetContentsTree();
+
+	auto rootID = this->contentsTree->AddRoot(
+		this->rootDir->getName(), -1, -1,
+		new ContentsTreeItemData(this->rootDir->getPath()));
+
+	this->contentsTree->AppendItem(rootID, "item1");
+	this->contentsTree->AppendItem(rootID, "item2");
+	this->contentsTree->AppendItem(rootID, "item3");
+	this->contentsTree->AppendItem(rootID, "item4");
+
+	auto expandableItemID =
+		this->contentsTree->AppendItem(rootID, "EXPANDABLE");
+	this->contentsTree->AppendItem(expandableItemID, "subitem1");
+	this->contentsTree->AppendItem(expandableItemID, "subitem2");
+	this->contentsTree->AppendItem(expandableItemID, "subitem3");
+	this->contentsTree->AppendItem(expandableItemID, "subitem4");
+}
+
+void MainFrame::ResetContentsTree() {
+	// Delete existing tree
+	if (this->contentsTree != nullptr) {
+		delete this->contentsTree;
+	}
+
+	// Create a new tree
+	this->contentsTree = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
+										wxSize(150, 500), wxTR_DEFAULT_STYLE);
 }

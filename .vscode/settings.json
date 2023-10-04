@@ -1,6 +1,7 @@
 {
 	"files.associations": {
 		"*.hs": "haskell",
-		"filesystem": "cpp"
+		"filesystem": "cpp",
+		"stdexcept": "cpp"
 	}
 }
