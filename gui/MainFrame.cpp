@@ -84,17 +84,25 @@ void MainFrame::BuildContentsTree() {
 		this->rootDir->getName(), -1, -1,
 		new ContentsTreeItemData(this->rootDir->getPath()));
 
-	this->contentsTree->AppendItem(rootID, "item1");
-	this->contentsTree->AppendItem(rootID, "item2");
-	this->contentsTree->AppendItem(rootID, "item3");
-	this->contentsTree->AppendItem(rootID, "item4");
+	BuildContentsTreeRecursive(rootID, this->rootDir);
+}
 
-	auto expandableItemID =
-		this->contentsTree->AppendItem(rootID, "EXPANDABLE");
-	this->contentsTree->AppendItem(expandableItemID, "subitem1");
-	this->contentsTree->AppendItem(expandableItemID, "subitem2");
-	this->contentsTree->AppendItem(expandableItemID, "subitem3");
-	this->contentsTree->AppendItem(expandableItemID, "subitem4");
+void MainFrame::BuildContentsTreeRecursive(const wxTreeItemId& currentNodeID,
+										   Directory* currentDir) {
+	// Check everything in the current directory
+	for (const auto& file : currentDir->getFiles()) {
+		// std::cout << file << std::endl;
+		this->contentsTree->AppendItem(currentNodeID, file.filename().string(),
+									   -1, -1, new ContentsTreeItemData(file));
+	}
+
+	for (const auto& dir : currentDir->getDirs()) {
+		// std::cout << dir->getPath() << std::endl;
+		auto newNodeID = this->contentsTree->AppendItem(
+			currentNodeID, dir->getName(), -1, -1,
+			new ContentsTreeItemData(dir->getPath()));
+		BuildContentsTreeRecursive(newNodeID, dir);
+	}
 }
 
 void MainFrame::ChangeContentsDirectory(const fs::path& newDir) {

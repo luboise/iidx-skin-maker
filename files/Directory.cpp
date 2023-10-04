@@ -18,3 +18,6 @@ void Directory::addSubdir(Directory* dir) {
 	}
 	this->subdirs.push_back(dir);
 }
+
+std::list<fs::path> Directory::getFiles() const { return this->files; }
+std::list<Directory*> Directory::getDirs() const { return this->subdirs; }

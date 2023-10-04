@@ -20,9 +20,12 @@ class MainFrame : public wxFrame {
 	void OnOpenNewContentsFolder(wxCommandEvent& event);
 	void OnClickContentsFile(wxTreeEvent& event);
 
-	void BuildContentsTree();
-	void ChangeContentsDirectory(const fs::path& newDir);
 	void ResetContentsTree();
+	void ChangeContentsDirectory(const fs::path& newDir);
+
+	void BuildContentsTree();
+	void BuildContentsTreeRecursive(const wxTreeItemId& currentNode,
+									Directory* currentDir);
 
 	fs::path contentsDirPath;
 	wxTreeCtrl* contentsTree;

@@ -18,6 +18,9 @@ class Directory {
 	void addFile(const fs::path& path);
 	void addSubdir(Directory* path);
 
+	std::list<fs::path> getFiles() const;
+	std::list<Directory*> getDirs() const;
+
    private:
 	fs::path path;
 	std::list<fs::path> files;

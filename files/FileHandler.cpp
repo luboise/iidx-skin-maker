@@ -28,6 +28,5 @@ void FileHandler::buildTreeRecursive(Directory* currentDir) {
 		else if (fs::is_regular_file(entry)) {
 			currentDir->addFile(entry.path());
 		}
-		std::cout << entry.path() << std::endl;
 	}
 }
