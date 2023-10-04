@@ -5,6 +5,7 @@ using std::string;
 
 // For compilers that support precompilation, includes "wx/wx.h".
 #include <wx/wxprec.h>
+#include <wx/treectrl.h>
 
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
@@ -12,7 +13,9 @@ using std::string;
 
 #include "files/FileHandler.h"
 
-class MyApp : public wxApp
+namespace fs = std::filesystem;
+
+class SkinMaker : public wxApp
 {
 public:
 	virtual bool OnInit();
@@ -24,12 +27,15 @@ public:
 	MainFrame();
 
 private:
+	// Event Handlers
 	void OnHello(wxCommandEvent& event);
 	void OnExit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnOpenNewContentsFolder(wxCommandEvent& event);
+	void OnClickContentsFile(wxTreeEvent& event);
 
-	string contentsDirPath;
+	fs::path contentsDirPath;
+	wxTreeCtrl* contentsTree;
 };
 
 enum
@@ -38,14 +44,14 @@ enum
 	ID_NewContentsFolder = 2
 };
 
-wxIMPLEMENT_APP(MyApp);
+wxIMPLEMENT_APP(SkinMaker);
 
-bool MyApp::OnInit()
+bool SkinMaker::OnInit()
 {
 	MainFrame* frame = new MainFrame();
 	frame->Show(true);
 
-	string x = "/home/luboise/iidx-skin-maker/test/contents/data";
+	auto x = fs::path("/home/luboise/iidx-skin-maker/test/contents/data");
 	FileHandler::getFileTree(x);
 
 	return true;
@@ -69,13 +75,30 @@ MainFrame::MainFrame()
 	menuHelp->Append(wxID_ABOUT);
 
 	// Add file menu and help menu to menu bar
-	wxMenuBar* mainbar = new wxMenuBar;
-	mainbar->Append(menuFile, "&File");
-	mainbar->Append(menuHelp, "&Help");
-	SetMenuBar(mainbar);
+	wxMenuBar* mainBar = new wxMenuBar;
+	mainBar->Append(menuFile, "&File");
+	mainBar->Append(menuHelp, "&Help");
+	SetMenuBar(mainBar);
+
+	this->contentsTree = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200), wxSize(150, 500), wxTR_DEFAULT_STYLE);
+
+	auto rootItem = contentsTree->AddRoot("Root");
+	contentsTree->AppendItem(rootItem, "item1");
+	contentsTree->AppendItem(rootItem, "item2");
+	contentsTree->AppendItem(rootItem, "item3");
+	contentsTree->AppendItem(rootItem, "item4");
+
+	auto expandableItem = contentsTree->AppendItem(rootItem, "EXPANDABLE");
+	contentsTree->AppendItem(expandableItem, "subitem1");
+	contentsTree->AppendItem(expandableItem, "subitem2");
+	contentsTree->AppendItem(expandableItem, "subitem3");
+	contentsTree->AppendItem(expandableItem, "subitem4");
+
+	contentsTree->ExpandAll();
 
 	CreateStatusBar();
 	SetStatusText("Welcome to wxWidgets!");
+
 
 
 
@@ -83,6 +106,7 @@ MainFrame::MainFrame()
 	Bind(wxEVT_MENU, &MainFrame::OnOpenNewContentsFolder, this, ID_NewContentsFolder);
 	Bind(wxEVT_MENU, &MainFrame::OnAbout, this, wxID_ABOUT);
 	Bind(wxEVT_MENU, &MainFrame::OnExit, this, wxID_EXIT);
+	Bind(wxEVT_TREE_ITEM_ACTIVATED, &MainFrame::OnClickContentsFile, this, wxID_ANY);
 }
 
 void MainFrame::OnExit(wxCommandEvent& event)
@@ -110,9 +134,21 @@ void MainFrame::OnOpenNewContentsFolder(wxCommandEvent& event) {
 		return;
 	}
 
-	this->contentsDirPath = contentsDialog.GetPath();
+	this->contentsDirPath = fs::path((string)contentsDialog.GetPath());
 
-	wxLogMessage("%s", contentsDirPath);
+	wxLogMessage("%s", contentsDirPath.string());
 	FileHandler::getFileTree(contentsDirPath);
+}
+
+void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
+	wxTreeItemId id = event.GetItem();
+
+	if (id.IsOk()) {
+		wxMessageBox("You clicked " + contentsTree->GetItemText(id));
+	}
+	else {
+		throw std::logic_error("Invalid ID from clicked button");
+	}
+
 }
 

@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-Directory* FileHandler::getFileTree(string& baseDir)
+Directory* FileHandler::getFileTree(fs::path& baseDir)
 {
 	auto initialPath = fs::path(baseDir);
 	if (!fs::exists(initialPath))
