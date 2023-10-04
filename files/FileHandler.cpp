@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-Directory* FileHandler::scanDirectory(fs::path& baseDir) {
+Directory* FileHandler::scanDirectory(const fs::path& baseDir) {
 	auto initialPath = fs::path(baseDir);
 	if (!fs::exists(initialPath)) {
 		throw std::invalid_argument("Bad directory used: " +

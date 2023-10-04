@@ -31,10 +31,7 @@ MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Hello World") {
 	mainBar->Append(menuHelp, "&Help");
 	SetMenuBar(mainBar);
 
-	// Build the contents tree
-	auto x = fs::path("/home/luboise/iidx-skin-maker/test/contents/data");
-	this->rootDir = FileHandler::scanDirectory(x);
-	this->BuildContentsTree();
+	ChangeContentsDirectory("/home/luboise/iidx-skin-maker/test/contents/data");
 
 	CreateStatusBar();
 	SetStatusText("Welcome to wxWidgets!");
@@ -67,11 +64,7 @@ void MainFrame::OnOpenNewContentsFolder(wxCommandEvent& event) {
 		return;
 	}
 
-	this->contentsDirPath = fs::path((string)contentsDialog.GetPath());
-	this->rootDir = FileHandler::scanDirectory(contentsDirPath);
-	this->BuildContentsTree();
-
-	contentsTree->ExpandAll();
+	ChangeContentsDirectory(contentsDialog.GetPath().ToStdString());
 }
 
 void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
@@ -102,6 +95,12 @@ void MainFrame::BuildContentsTree() {
 	this->contentsTree->AppendItem(expandableItemID, "subitem2");
 	this->contentsTree->AppendItem(expandableItemID, "subitem3");
 	this->contentsTree->AppendItem(expandableItemID, "subitem4");
+}
+
+void MainFrame::ChangeContentsDirectory(const fs::path& newDir) {
+	this->rootDir = FileHandler::scanDirectory(newDir);
+	this->BuildContentsTree();
+	contentsTree->ExpandAll();
 }
 
 void MainFrame::ResetContentsTree() {

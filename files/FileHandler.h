@@ -4,7 +4,7 @@
 
 class FileHandler {
    public:
-	static Directory* scanDirectory(fs::path& baseDir);
+	static Directory* scanDirectory(const fs::path& baseDir);
 
    private:
 	static void buildTreeRecursive(Directory* currentDir);

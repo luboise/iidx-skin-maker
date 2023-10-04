@@ -19,8 +19,9 @@ class MainFrame : public wxFrame {
 	void OnAbout(wxCommandEvent& event);
 	void OnOpenNewContentsFolder(wxCommandEvent& event);
 	void OnClickContentsFile(wxTreeEvent& event);
-	void BuildContentsTree();
 
+	void BuildContentsTree();
+	void ChangeContentsDirectory(const fs::path& newDir);
 	void ResetContentsTree();
 
 	fs::path contentsDirPath;
