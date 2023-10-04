@@ -2,17 +2,10 @@
 
 #include "Directory.h"
 
-
-
-
-
 class FileHandler {
-public:
-	static Directory* getFileTree(fs::path& baseDir);
-private:
+   public:
+	static Directory* scanDirectory(fs::path& baseDir);
+
+   private:
 	static void buildTreeRecursive(Directory* currentDir);
 };
-
-
-
-

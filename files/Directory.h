@@ -1,13 +1,15 @@
+#pragma once
+
 #include <filesystem>
-#include <vector>
 #include <list>
+#include <vector>
 
 namespace fs = std::filesystem;
 using std::string;
 using std::vector;
 
 class Directory {
-public:
+   public:
 	Directory(fs::path path);
 
 	string getName() const;
@@ -15,7 +17,8 @@ public:
 
 	void addFile(const fs::path& path);
 	void addSubdir(Directory* path);
-private:
+
+   private:
 	fs::path path;
 	std::list<fs::path> files;
 	std::list<Directory*> subdirs;

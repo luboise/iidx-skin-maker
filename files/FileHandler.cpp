@@ -2,12 +2,11 @@
 
 #include <iostream>
 
-Directory* FileHandler::getFileTree(fs::path& baseDir)
-{
+Directory* FileHandler::scanDirectory(fs::path& baseDir) {
 	auto initialPath = fs::path(baseDir);
-	if (!fs::exists(initialPath))
-	{
-		throw std::invalid_argument("Bad directory used: " + initialPath.string());
+	if (!fs::exists(initialPath)) {
+		throw std::invalid_argument("Bad directory used: " +
+									initialPath.string());
 	}
 
 	Directory* tree = new Directory(initialPath);
@@ -16,8 +15,7 @@ Directory* FileHandler::getFileTree(fs::path& baseDir)
 	return tree;
 };
 
-void FileHandler::buildTreeRecursive(Directory* currentDir)
-{
+void FileHandler::buildTreeRecursive(Directory* currentDir) {
 	// Check everything in the current directory
 	for (const auto& entry : fs::directory_iterator(currentDir->getPath())) {
 		// For each directory, add it to the list and recursively check it
@@ -33,5 +31,3 @@ void FileHandler::buildTreeRecursive(Directory* currentDir)
 		std::cout << entry.path() << std::endl;
 	}
 }
-
-
