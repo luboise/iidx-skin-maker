@@ -8,9 +8,12 @@
 #define FRAMES_PER_BUFFER (SAMPLES_PER_BUFFER / N_CHANNELS)
 #define BITS_PER_SAMPLE 4
 
-struct AudioFrame {
-	char left = 0;
-	char right = 0;
+union AudioFrame {
+	struct {
+		unsigned int left : 4;	 // 4 bits for the left half
+		unsigned int right : 4;	 // 4 bits for the right half
+	} half;
+	char full;	// 8-bit representation
 };
 
 class AudioHandler {

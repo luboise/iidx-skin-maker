@@ -23,8 +23,8 @@ void AudioHandler::PlaySound(char *wavData, unsigned long dataSize) {
 	BufferManager *bm = new BufferManager(wavData, dataSize);
 
 	// Create the stream, and put the wav in it (last arg)
-	err = Pa_OpenDefaultStream(&stream, 0, N_CHANNELS, paInt8, 44100,
-							   SAMPLES_PER_BUFFER, &AudioHandler::audioCallback,
+	err = Pa_OpenDefaultStream(&stream, 0, N_CHANNELS, paFloat32, 44100,
+							   FRAMES_PER_BUFFER, &AudioHandler::audioCallback,
 							   bm);
 
 	if (err != paNoError) {
@@ -48,15 +48,15 @@ int AudioHandler::audioCallback(const void *inputBuffer, void *outputBuffer,
 	BufferManager &bm = *(BufferManager *)userData;
 
 	// Read the output buffer
-	char *out = (char *)outputBuffer;
+	float *out = (float *)outputBuffer;
 
 	(void)inputBuffer; /* Prevent unused variable warning. */
 
 	for (unsigned i = 0; i < framesPerBuffer; i++) {
 		AudioFrame frame = bm.GetFrame();
 
-		*out++ = frame.left;  /* left */
-		*out++ = frame.right; /* right */
+		*out++ = (frame.half.left / 15.0f) * 2 - 1;	 /* left */
+		*out++ = (frame.half.right / 15.0f) * 2 - 1; /* right */
 	}
 	return paContinue;
 };
@@ -73,12 +73,7 @@ BufferManager::BufferManager(char *chars, unsigned long charCount) {
 
 		// Copy the data across from the old buffer
 		for (auto i = 0; i < FRAMES_PER_BUFFER; i++) {
-			newBuffer[i].left = chars[charTracker++];
-			if (charTracker >= charCount) {
-				newBuffer[i].right = 0;
-			} else {
-				newBuffer[i].right = chars[charTracker++];
-			}
+			newBuffer[i].full = chars[charTracker++];
 
 			if ((charTracker + i) >= charCount) {
 				break;
