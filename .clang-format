@@ -3,3 +3,4 @@ UseTab: Always
 IndentWidth: 4
 TabWidth: 4
 SortIncludes: true
+PointerAlignment: Left

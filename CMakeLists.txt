@@ -16,8 +16,9 @@ endif()
 # Extra Folders
 file(GLOB FILESYSTEM_SOURCES "files/*.cpp" "files/*.h")
 file(GLOB GUI_SOURCES "gui/*.cpp" "gui/*.h")
+file(GLOB AUDIO_SOURCES "audio/*.cpp" "audio/*.h")
 
-add_executable(${PROJECT_NAME} main.cpp ${FILESYSTEM_SOURCES} ${GUI_SOURCES})
+add_executable(${PROJECT_NAME} main.cpp ${FILESYSTEM_SOURCES} ${GUI_SOURCES} ${AUDIO_SOURCES})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE gui file)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES} -lportaudio)
