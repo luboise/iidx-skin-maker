@@ -1,5 +1,6 @@
 #include "MainFrame.h"
 
+#include <portaudio.h>
 #include <wx/mstream.h>
 #include <wx/sound.h>
 
@@ -16,6 +17,8 @@ class ContentsTreeItemData : public wxTreeItemData {
 };
 
 MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Hello World") {
+	this->contentsTree = nullptr;
+
 	wxMenu* menuFile = new wxMenu;
 	menuFile->Append(ID_Hello, "&Hello...\tCtrl-H",
 					 "Help string shown in status bar for this menu item");
@@ -48,7 +51,10 @@ MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Hello World") {
 		 wxID_ANY);
 }
 
-void MainFrame::OnExit(wxCommandEvent& event) { Close(true); }
+void MainFrame::OnExit(wxCommandEvent& event) {
+	Pa_Terminate();
+	Close(true);
+}
 
 void MainFrame::OnAbout(wxCommandEvent& event) {
 	wxMessageBox("This is a wxWidgets Hello World example", "About Hello World",
@@ -60,14 +66,14 @@ void MainFrame::OnHello(wxCommandEvent& event) {
 }
 
 void MainFrame::OnOpenNewContentsFolder(wxCommandEvent& event) {
-	wxDirDialog contentsDialog(this, "Select your IIDX Contents Folder");
+	const wxString& dir = wxDirSelector("Select your IIDX Contents Folder");
 
-	if (contentsDialog.ShowModal() == wxID_CANCEL) {
+	if (dir.empty()) {
 		wxLogMessage("Folder not specified. Keeping current folder.");
 		return;
 	}
 
-	ChangeContentsDirectory(contentsDialog.GetPath().ToStdString());
+	ChangeContentsDirectory(dir.ToStdString());
 }
 
 void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
