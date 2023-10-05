@@ -14,13 +14,13 @@ bool AudioHandler::Init() {
 
 void AudioHandler::Terminate() { Pa_Terminate(); }
 
-void AudioHandler::PlaySound(char *wavData) {
+void AudioHandler::PlaySound(char *wavData, unsigned long dataSize) {
 	PaStream *stream;
 
 	PaError err;
 
 	// Parse the wav file into relevant information
-	BufferManager *bm = new BufferManager(wavData, 149252);
+	BufferManager *bm = new BufferManager(wavData, dataSize);
 
 	// Create the stream, and put the wav in it (last arg)
 	err = Pa_OpenDefaultStream(&stream, 0, N_CHANNELS, paInt8, 44100,

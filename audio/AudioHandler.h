@@ -6,6 +6,7 @@
 #define N_CHANNELS (2)
 #define SAMPLES_PER_BUFFER (512)
 #define FRAMES_PER_BUFFER (SAMPLES_PER_BUFFER / N_CHANNELS)
+#define BITS_PER_SAMPLE 4
 
 struct AudioFrame {
 	char left = 0;
@@ -17,7 +18,7 @@ class AudioHandler {
 	static bool Init();
 	static void Terminate();
 
-	static void PlaySound(char *wavFile);
+	static void PlaySound(char *wavFile, unsigned long dataSize);
 	static void TestSound();
 
    private:

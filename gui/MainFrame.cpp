@@ -4,6 +4,7 @@
 #include <wx/mstream.h>
 #include <wx/sound.h>
 
+#include "../audio/AudioHandler.h"
 #include "../files/FileHandler.h"
 
 class ContentsTreeItemData : public wxTreeItemData {
@@ -90,6 +91,8 @@ void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
 			// Read the first 32 bytes of the file and ignore them
 			size_t dataSize;
 			char* data = FileHandler::readSD9File(p, dataSize);
+
+			AudioHandler::PlaySound(data, dataSize);
 
 			// Need to play the audio
 		}
