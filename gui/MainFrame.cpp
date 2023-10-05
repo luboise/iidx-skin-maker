@@ -1,5 +1,8 @@
 #include "MainFrame.h"
 
+#include <wx/mstream.h>
+#include <wx/sound.h>
+
 #include "../files/FileHandler.h"
 
 class ContentsTreeItemData : public wxTreeItemData {
@@ -71,7 +74,21 @@ void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
 	wxTreeItemId id = event.GetItem();
 
 	if (id.IsOk()) {
-		wxMessageBox("You clicked " + contentsTree->GetItemText(id));
+		// wxMessageBox("You clicked " + contentsTree->GetItemText(id));
+
+		auto treeItem = *(ContentsTreeItemData*)contentsTree->GetItemData(id);
+
+		fs::path p = treeItem.GetFilePath();
+
+		if (fs::exists(p)) {
+			// Read the first 32 bytes of the file and ignore them
+			size_t dataSize;
+			char* data = FileHandler::readSD9File(p, dataSize);
+
+			// Need to play the audio
+		}
+
+		((ContentsTreeItemData*)contentsTree->GetItemData(id))->GetFilePath();
 	} else {
 		throw std::logic_error("Invalid ID from clicked button");
 	}
