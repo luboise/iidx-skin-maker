@@ -88,11 +88,13 @@ void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
 		fs::path p = treeItem.GetFilePath();
 
 		if (fs::exists(p)) {
+			auto adpcm = ADPCMData(p);
+
 			// Read the first 32 bytes of the file and ignore them
 			size_t dataSize;
 			char* data = FileHandler::readSD9File(p, dataSize);
 
-			AudioHandler::PlaySound(data, dataSize);
+			// AudioHandler::PlaySound(data, dataSize);
 
 			// Need to play the audio
 		}

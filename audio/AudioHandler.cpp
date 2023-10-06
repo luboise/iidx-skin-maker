@@ -1,6 +1,9 @@
 #include "AudioHandler.h"
 
+#include <fstream>
 #include <stdexcept>
+
+using std::ifstream;
 
 bool AudioHandler::Init() {
 	auto err = Pa_Initialize();
@@ -92,4 +95,44 @@ AudioFrame &BufferManager::GetFrame() {
 		this->frameCounter++;
 	}
 	return returnVal;
+}
+
+template <typename T>
+T &swap16(T &block) {
+	block = block << 8 | block >> 8;
+	return block;
+}
+
+ADPCMData::ADPCMData(fs::path filepath) {
+	size_t numBytes;
+
+	ifstream ifs(filepath, std::ios::binary);
+
+	// Get the sd9 chunk
+	ifs.read(this->sd9bytes, SD9_HEADER_SIZE);
+
+	// Get the RIFF chunk
+	ifs.read(reinterpret_cast<char *>(&this->riffChunk),
+			 sizeof(this->riffChunk));
+
+	// Get the first subchunk
+	ifs.read(reinterpret_cast<char *>(&this->fmtChunk), sizeof(this->fmtChunk));
+
+	swap16<u16>(this->fmtChunk.blockAlign);
+
+	auto x = this->fmtChunk.numCoefficients;
+
+	short **coefs = new short *[2];
+	for (int i = 0; i < 2; ++i) {
+		coefs[i] = new short[x];
+	}
+
+	for (auto i = 0; i < x; i++) {
+		ifs.read(reinterpret_cast<char *>(&coefs[0][i]), sizeof(short));
+		swap16<short>(coefs[0][i]);
+		ifs.read((char *)&coefs[1][i], sizeof(short));
+		swap16(coefs[1][i]);
+	}
+
+	bool ni = true;
 }

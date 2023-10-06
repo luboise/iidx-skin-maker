@@ -1,6 +1,10 @@
+#pragma once
+
 #include <string>
 
 #include "Directory.h"
+
+#define SD9_HEADER_SIZE 32
 
 class FileHandler {
    public:

@@ -4,7 +4,6 @@
 #include <iostream>
 using std::ifstream;
 
-#define SD9_HEADER_SIZE 32
 #define WAV_SUBCHUNK_VALUE_OFFSET 16
 
 Directory* FileHandler::scanDirectory(const fs::path& baseDir) {
