@@ -89,17 +89,14 @@ void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
 
 		if (fs::exists(p)) {
 			auto adpcm = ADPCMData(p);
-
-			// Read the first 32 bytes of the file and ignore them
-			size_t dataSize;
-			char* data = FileHandler::readSD9File(p, dataSize);
+			auto wav = PCMData(adpcm);
 
 			// AudioHandler::PlaySound(data, dataSize);
 
 			// Need to play the audio
 		}
 
-		((ContentsTreeItemData*)contentsTree->GetItemData(id))->GetFilePath();
+		// ((ContentsTreeItemData*)contentsTree->GetItemData(id))->GetFilePath();
 	} else {
 		throw std::logic_error("Invalid ID from clicked button");
 	}

@@ -7,11 +7,7 @@
 
 #include "../files/FileHandler.h"
 
-#define SAMPLE_RATE (44100)
-#define N_CHANNELS (2)
-#define SAMPLES_PER_BUFFER (512)
-#define FRAMES_PER_BUFFER (SAMPLES_PER_BUFFER / N_CHANNELS)
-#define BITS_PER_SAMPLE 4
+#define STEREO_PREAMBLE_SIZE 14
 
 using std::string;
 
@@ -19,13 +15,38 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 typedef char i8;
+typedef short i16;
 
 union AudioFrame {
 	struct {
-		unsigned int left : 4;	 // 4 bits for the left half
 		unsigned int right : 4;	 // 4 bits for the right half
+		unsigned int left : 4;	 // 4 bits for the left half
 	} half;
 	char full;	// 8-bit representation
+};
+
+struct StereoPreamble {
+	i8 leftBlockPredictor;
+	i8 rightBlockPredictor;
+	i16 leftInitialDelta;
+	i16 rightInitialDelta;
+	i16 leftSample1;
+	i16 rightSample1;
+	i16 leftSample2;
+	i16 rightSample2;
+};
+
+class Block {
+   public:
+	Block(StereoPreamble preamble);
+	~Block();
+
+	void insertAudioFrame(AudioFrame *af);
+	const vector<AudioFrame *> &getAudioFrames() const;
+
+   private:
+	StereoPreamble m_preamble;
+	vector<AudioFrame *> m_audioframes;
 };
 
 class AudioHandler {
@@ -50,9 +71,10 @@ class AudioHandler {
 							 PaStreamCallbackFlags statusFlags, void *userData);
 };
 
-class BufferManager {
+class PCMBufferManager {
    public:
-	BufferManager(char *chars, unsigned long charCount);
+	PCMBufferManager(const vector<Block *> &adpcmBlocks,
+					 unsigned long samplesPerBlock, unsigned long bufferSize);
 	AudioFrame &GetFrame();
 
    private:
@@ -62,6 +84,8 @@ class BufferManager {
 };
 
 class ADPCMData {
+	friend class PCMData;
+
    public:
 	ADPCMData(fs::path filepath);
 
@@ -103,7 +127,61 @@ class ADPCMData {
 	} fmtChunk;
 
 	struct {
+		char factStr[4];
+		u32 strSize;
+		u32 numSamples;
+	} factChunk;
+
+	struct {
 		u8 dataString[4] = {'d', 'a', 't', 'a'};
 		u32 chunkSize;
+		vector<Block *> blocks;
 	} dataChunk;
+};
+
+class PCMData {
+   public:
+	PCMData(const ADPCMData &adpcm);
+
+   private:
+	i8 sd9bytes[SD9_HEADER_SIZE];
+	struct {
+		i8 riffstr[4] = {'R', 'I', 'F', 'F'};
+		u32 dataSize;
+		i8 formatString[4] = {'W', 'A', 'V', 'E'};
+	} riffChunk;
+
+	struct {
+		u8 fmtString[4] = {'f', 'm', 't', ' '};
+		u32 chunkSize;
+		u16 formatTag;
+		u16 channels;
+		u32 samplesPerSecond;
+		u32 avrgBytesPerSecond;
+
+		// (BE) Size of a single frame, equal to (channels * bits per sample) /
+		// 8, 1 byte for MS ADPCM
+		u16 blockAlign;
+
+		// (BE) 16bit for PCM
+		u16 bitsPerSample = 16;
+
+		// (LE) Extra data size (0 when converting from ADPCM)
+		u16 cbSize = 0;
+
+	} fmtChunk;
+
+	struct {
+		char factStr[4];
+		u32 strSize;
+		u32 numSamples;
+	} factChunk;
+
+	struct {
+		u8 dataString[4] = {'d', 'a', 't', 'a'};
+		u32 chunkSize;
+		vector<Block *> blocks;
+	} dataChunk;
+
+	PCMBufferManager *bm;
 };
