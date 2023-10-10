@@ -19,10 +19,15 @@ typedef short i16;
 
 union AudioFrame {
 	struct {
-		unsigned int right : 4;	 // 4 bits for the right half
-		unsigned int left : 4;	 // 4 bits for the left half
+		int right : 4;	// 4 bits for the right half
+		int left : 4;	// 4 bits for the left half
 	} half;
 	char full;	// 8-bit representation
+};
+
+struct PCMFrame {
+	i16 leftSample;
+	i16 rightSample;
 };
 
 struct StereoPreamble {
@@ -40,6 +45,8 @@ class Block {
    public:
 	Block(StereoPreamble preamble);
 	~Block();
+
+	StereoPreamble getPreamble() const;
 
 	void insertAudioFrame(AudioFrame *af);
 	const vector<AudioFrame *> &getAudioFrames() const;
@@ -75,12 +82,12 @@ class PCMBufferManager {
    public:
 	PCMBufferManager(const vector<Block *> &adpcmBlocks,
 					 unsigned long samplesPerBlock, unsigned long bufferSize);
-	AudioFrame &GetFrame();
+	PCMFrame &GetFrame();
 
    private:
 	unsigned long frameCounter;
 	unsigned long bufferPosition;
-	std::vector<AudioFrame *> buffers;
+	std::vector<PCMFrame *> buffers;
 };
 
 class ADPCMData {
@@ -88,6 +95,7 @@ class ADPCMData {
 
    public:
 	ADPCMData(fs::path filepath);
+	vector<Block *> &getBlocks() const;
 
    private:
 	i8 sd9bytes[SD9_HEADER_SIZE];

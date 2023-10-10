@@ -52,15 +52,15 @@ int AudioHandler::audioCallback(const void *inputBuffer, void *outputBuffer,
 	PCMBufferManager &bm = *(PCMBufferManager *)userData;
 
 	// Read the output buffer
-	float *out = (float *)outputBuffer;
+	u16 *out = (u16 *)outputBuffer;
 
 	(void)inputBuffer; /* Prevent unused variable warning. */
 
 	for (unsigned i = 0; i < framesPerBuffer; i++) {
-		AudioFrame frame = bm.GetFrame();
+		PCMFrame frame = bm.GetFrame();
 
-		*out++ = (frame.half.left / 15.0f) * 2 - 1;	 /* left */
-		*out++ = (frame.half.right / 15.0f) * 2 - 1; /* right */
+		*out++ = frame.leftSample;
+		*out++ = frame.rightSample; /* right */
 	}
 	return paContinue;
 };
@@ -91,11 +91,11 @@ int AudioHandler::audioCallback(const void *inputBuffer, void *outputBuffer,
 // 	}
 // }
 
-AudioFrame &PCMBufferManager::GetFrame() {
+PCMFrame &PCMBufferManager::GetFrame() {
 	// TODO: REMOVE
 	auto FRAMES_PER_BUFFER = 256;
 
-	AudioFrame &returnVal = buffers[this->frameCounter][this->bufferPosition++];
+	PCMFrame &returnVal = buffers[this->frameCounter][this->bufferPosition++];
 
 	if (bufferPosition >= FRAMES_PER_BUFFER) {
 		bufferPosition = 0;
@@ -183,6 +183,10 @@ ADPCMData::ADPCMData(fs::path filepath) {
 	}
 }
 
+vector<Block *> &ADPCMData::getBlocks() const {
+	return *this->dataChunk.blocks();
+}
+
 Block::Block(StereoPreamble preamble) { this->m_preamble = preamble; }
 
 Block::~Block() {
@@ -193,6 +197,8 @@ Block::~Block() {
 		}
 	}
 }
+
+StereoPreamble Block::getPreamble() const { return this->m_preamble; }
 
 void Block::insertAudioFrame(AudioFrame *af) {
 	this->m_audioframes.push_back(af);
@@ -216,10 +222,25 @@ PCMData::PCMData(const ADPCMData &adpcm) {
 									adpcm.fmtChunk.samplesPerBlock, 1536);
 }
 
-PCMBufferManager::PCMBufferManager(const vector<Block *> &adpcmBlocks,
+PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
 								   unsigned long samplesPerBlock,
 								   unsigned long BufferSize) {
+	this->bufferPosition = 0;
+
+	const vector<Block *> &adpcmBlocks = adpcm.getBlocks();
+
 	for (const Block *bPtr : adpcmBlocks) {
-		// Get
+		auto &b = *bPtr;
+		auto preamble = b.getPreamble();
+
+		auto lpred = preamble.leftBlockPredictor;
+		auto rpred = preamble.rightBlockPredictor;
+
+		// For each left and right nibble
+		for (auto i = 0; i < samplesPerBlock / 2; i++) {
+		}
 	}
+
+	this->frameCounter = 0;
+	this->bufferPosition = 0;
 }
