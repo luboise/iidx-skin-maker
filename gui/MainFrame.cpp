@@ -89,13 +89,17 @@ void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
 
 		if (fs::exists(p)) {
 			auto adpcm = ADPCMData(p);
-			auto pcm = PCMData(adpcm);
 
-			auto& bm = pcm.getBufferManager();
-
-			AudioHandler::PlayPCM(bm);
-
-			// Need to play the audio
+			// Attempt to convert the data to pcm
+			try {
+				auto pcm = PCMData(adpcm);
+				auto& bm = pcm.getBufferManager();
+				AudioHandler::PlayPCM(bm);
+			} catch (std::exception e) {
+				std::stringstream ss;
+				ss << "ERROR: Can't convert ADPCM to PCM. (" << e.what() << ")";
+				wxMessageBox(ss.str());
+			}
 		}
 
 		// ((ContentsTreeItemData*)contentsTree->GetItemData(id))->GetFilePath();

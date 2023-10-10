@@ -66,6 +66,7 @@ class ADPCMData {
 
 	short *getLCoefs() const;
 	short *getRCoefs() const;
+	size_t getCoefCount() const;
 
 	u16 getSamplesPerBlock() const;
 

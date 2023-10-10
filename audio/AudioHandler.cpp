@@ -5,6 +5,7 @@
 
 // TODO: REMOVE LATER DEBUG ONLY
 #include <iostream>
+#include <sstream>
 
 using std::ifstream;
 
@@ -73,7 +74,7 @@ int AudioHandler::audioCallback(const void *inputBuffer, void *outputBuffer,
 	PCMBufferManager &bm = *(PCMBufferManager *)userData;
 
 	// Read the output buffer
-	u16 *out = (u16 *)outputBuffer;
+	i16 *out = (i16 *)outputBuffer;
 
 	(void)inputBuffer; /* Prevent unused variable warning. */
 
@@ -83,8 +84,9 @@ int AudioHandler::audioCallback(const void *inputBuffer, void *outputBuffer,
 		*out++ = frame.leftSample;
 		*out++ = frame.rightSample; /* right */
 
-		std::cout << "(" << frame.leftSample << "," << frame.rightSample << ")"
-				  << std::endl;
+		// std::cout << "(" << frame.leftSample << "," << frame.rightSample <<
+		// ")"
+		// 		  << std::endl;
 	}
 	return paContinue;
 };
@@ -135,7 +137,7 @@ ADPCMData::ADPCMData(fs::path filepath) {
 			 sizeof(this->fmtChunk) - 2 * sizeof(this->fmtChunk.l_coefs) - 2);
 
 	// Swap the blockAlign to big endian
-	swap16<u16>(this->fmtChunk.blockAlign);
+	// swap16<u16>(this->fmtChunk.blockAlign);
 
 	// Initialise the coefficients
 	auto x = this->fmtChunk.numCoefficients;
@@ -161,34 +163,45 @@ ADPCMData::ADPCMData(fs::path filepath) {
 	ifs.read(reinterpret_cast<char *>(&dataChunk),
 			 sizeof(dataChunk.dataString) + sizeof(dataChunk.chunkSize));
 
-	u32 blockSize = sizeof(StereoPreamble) +
-					((fmtChunk.samplesPerBlock * fmtChunk.bitsPerSample)) / 8;
+	// u32 blockSize = sizeof(StereoPreamble) +
+	// 				((fmtChunk.samplesPerBlock * fmtChunk.bitsPerSample)) / 8;
+	u32 blockSize = fmtChunk.blockAlign;
 
 	for (auto i = 0; i < dataChunk.chunkSize; i += blockSize) {
-		StereoPreamble sp;
-		ifs.read(reinterpret_cast<char *>(&sp), sizeof(sp));
-		Block *b = new Block(sp);
+		try {
+			StereoPreamble sp;
+			ifs.read(reinterpret_cast<char *>(&sp), sizeof(sp));
 
-		u16 j;
+			// swap16<i16>(sp.leftInitialDelta);
+			// swap16<i16>(sp.leftInitialDelta);
 
-		for (j = 0; j < fmtChunk.samplesPerBlock; j += 2) {
-			AudioFrame *af = new AudioFrame;
-			ifs.read(&af->full, sizeof(af->full));
-			b->insertAudioFrame(af);
+			Block *b = new Block(sp);
+
+			u16 j;
+
+			for (j = 0; j < fmtChunk.samplesPerBlock; j += 2) {
+				AudioFrame *af = new AudioFrame;
+				ifs.read(&af->full, sizeof(af->full));
+				b->insertAudioFrame(af);
+			}
+
+			this->dataChunk.blocks.push_back(b);
+
+			if (j > fmtChunk.samplesPerBlock) {
+				throw std::logic_error(
+					"A sample has been read that doesn't exist (j too high)");
+			}
+		} catch (std::exception e) {
+			std::cout << "Exception caught: " << e.what() << std::endl;
+			return;
 		}
-
-		this->dataChunk.blocks.push_back(b);
-
-		if (j > fmtChunk.samplesPerBlock) {
-			throw std::logic_error(
-				"A sample has been read that doesn't exist (j too high)");
-		};
 	}
 
-	if (!ifs.eof()) {
-		throw std::invalid_argument(
-			"End of file not reached after ADPCM blocks imported.");
-	}
+	// TODO: UNCOMMENT WHEN DONE DEBUGGING
+	// if (!ifs.eof()) {
+	// 	throw std::invalid_argument(
+	// 		"End of file not reached after ADPCM blocks imported.");
+	// }
 }
 
 const vector<Block *> ADPCMData::getBlocks() const {
@@ -197,6 +210,10 @@ const vector<Block *> ADPCMData::getBlocks() const {
 
 short *ADPCMData::getLCoefs() const { return this->fmtChunk.l_coefs; }
 short *ADPCMData::getRCoefs() const { return this->fmtChunk.r_coefs; }
+
+size_t ADPCMData::getCoefCount() const {
+	return this->fmtChunk.numCoefficients;
+}
 
 u16 ADPCMData::getSamplesPerBlock() const {
 	return this->fmtChunk.samplesPerBlock;
@@ -249,15 +266,14 @@ PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
 
 	const vector<Block *> &adpcmBlocks = adpcm.getBlocks();
 
-	// frames.push_back();
+	const size_t num_coefficients = adpcm.getCoefCount();
+	const auto l_coefs = adpcm.getLCoefs();
+	const auto r_coefs = adpcm.getRCoefs();
 
 	for (const Block *bPtr : adpcmBlocks) {
 		auto &b = *bPtr;
 
 		auto preamble = b.getPreamble();
-
-		const auto l_coefs = adpcm.getLCoefs();
-		const auto r_coefs = adpcm.getRCoefs();
 
 		struct {
 			i16 sample1;
@@ -281,20 +297,32 @@ PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
 		auto l_delta = preamble.leftInitialDelta;
 		auto r_delta = preamble.rightInitialDelta;
 
+		if (preamble.leftBlockPredictor >= num_coefficients ||
+			preamble.rightBlockPredictor >= num_coefficients) {
+			std::stringstream ss;
+
+			ss << "Invalid indices received: " << preamble.leftBlockPredictor
+			   << "|" << preamble.rightBlockPredictor << " (max of "
+			   << num_coefficients << " applies to both)";
+			throw std::invalid_argument(ss.str());
+		}
+
+		int l_coef1 = l_coefs[preamble.leftBlockPredictor];
+		int l_coef2 = r_coefs[preamble.leftBlockPredictor];
+
 		// For each left and right nibble
 		for (auto i = 0; i < samplesPerBlock / 2; i++) {
 			int l_nibble = b.getAudioFrames().at(i)->half.left;
 
-			auto coef1 = l_coefs[preamble.leftBlockPredictor];
-			auto coef2 = r_coefs[preamble.leftBlockPredictor];
-
-			int l_predictor =
-				((l_samples.sample1 * coef1) + (l_samples.sample2 * coef2)) /
-				256;
+			int l_predictor = ((l_samples.sample1 * l_coef1) +
+							   (l_samples.sample2 * l_coef2)) /
+							  256;
 
 			l_predictor += l_nibble * l_delta;
 
 			i16 pcm_val = l_predictor;
+
+			std::cout << pcm_val << ",";
 
 			frame = {pcm_val, 0};
 
@@ -310,6 +338,8 @@ PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
 				l_delta = 16;
 			}
 		}
+
+		std::cout << std::endl;
 	}
 
 	this->frameCounter = 0;
