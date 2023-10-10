@@ -89,9 +89,11 @@ void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
 
 		if (fs::exists(p)) {
 			auto adpcm = ADPCMData(p);
-			auto wav = PCMData(adpcm);
+			auto pcm = PCMData(adpcm);
 
-			// AudioHandler::PlaySound(data, dataSize);
+			auto& bm = pcm.getBufferManager();
+
+			AudioHandler::PlayPCM(bm);
 
 			// Need to play the audio
 		}
