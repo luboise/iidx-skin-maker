@@ -7,8 +7,6 @@
 
 #include "../files/FileHandler.h"
 
-#define STEREO_PREAMBLE_SIZE 14
-
 using std::string;
 
 typedef unsigned int u32;
@@ -22,6 +20,10 @@ union AudioFrame {
 		int right : 4;	// 4 bits for the right half
 		int left : 4;	// 4 bits for the left half
 	} half;
+	struct {
+		unsigned int right : 4;	 // 4 bits for the right half
+		unsigned left : 4;		 // 4 bits for the left half
+	} uhalf;
 	char full;	// 8-bit representation
 };
 
@@ -31,14 +33,14 @@ struct PCMFrame {
 };
 
 struct StereoPreamble {
-	i8 leftBlockPredictor;
-	i8 rightBlockPredictor;
+	u8 leftBlockPredictor;
+	u8 rightBlockPredictor;
 	i16 leftInitialDelta;
 	i16 rightInitialDelta;
-	i16 leftSample1;
-	i16 rightSample1;
 	i16 leftSample2;
 	i16 rightSample2;
+	i16 leftSample1;
+	i16 rightSample1;
 };
 
 class Block {

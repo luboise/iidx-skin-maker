@@ -136,9 +136,6 @@ ADPCMData::ADPCMData(fs::path filepath) {
 	ifs.read(reinterpret_cast<char *>(&this->fmtChunk),
 			 sizeof(this->fmtChunk) - 2 * sizeof(this->fmtChunk.l_coefs) - 2);
 
-	// Swap the blockAlign to big endian
-	// swap16<u16>(this->fmtChunk.blockAlign);
-
 	// Initialise the coefficients
 	auto x = this->fmtChunk.numCoefficients;
 
@@ -173,13 +170,14 @@ ADPCMData::ADPCMData(fs::path filepath) {
 			ifs.read(reinterpret_cast<char *>(&sp), sizeof(sp));
 
 			// swap16<i16>(sp.leftInitialDelta);
-			// swap16<i16>(sp.leftInitialDelta);
+			// swap16<i16>(sp.rightInitialDelta);
 
 			Block *b = new Block(sp);
 
 			u16 j;
 
-			for (j = 0; j < fmtChunk.samplesPerBlock; j += 2) {
+			// Exclude the 2 samples in the header
+			for (j = 0; j < fmtChunk.samplesPerBlock - 2; j++) {
 				AudioFrame *af = new AudioFrame;
 				ifs.read(&af->full, sizeof(af->full));
 				b->insertAudioFrame(af);
@@ -255,8 +253,8 @@ PCMData::PCMData(const ADPCMData &adpcm) {
 
 PCMBufferManager &PCMData::getBufferManager() { return *this->bm; }
 
-int AdaptationTable[] = {230, 230, 230, 230, 307, 409, 512, 614,
-						 768, 614, 512, 409, 307, 230, 230, 230};
+const int AdaptationTable[] = {230, 230, 230, 230, 307, 409, 512, 614,
+							   768, 614, 512, 409, 307, 230, 230, 230};
 
 PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
 								   size_t PCMBufferSize) {
@@ -280,8 +278,12 @@ PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
 			i16 sample2;
 		} l_samples, r_samples;
 
-		l_samples.sample1 = preamble.leftSample1;
-		l_samples.sample2 = preamble.leftSample2;
+		// TODO: UNCOMMENT THIS AND FIX IT IN ADPCM INSTEAD
+		// l_samples.sample1 = preamble.leftSample1;
+		// l_samples.sample2 = preamble.leftSample2;
+
+		l_samples.sample1 = preamble.leftSample2;
+		l_samples.sample2 = preamble.leftSample1;
 
 		r_samples.sample1 = 0;
 		r_samples.sample2 = 0;
@@ -295,7 +297,7 @@ PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
 		frames.push_back(new PCMFrame(frame));
 
 		auto l_delta = preamble.leftInitialDelta;
-		auto r_delta = preamble.rightInitialDelta;
+		// auto r_delta = preamble.rightInitialDelta;
 
 		if (preamble.leftBlockPredictor >= num_coefficients ||
 			preamble.rightBlockPredictor >= num_coefficients) {
@@ -311,7 +313,7 @@ PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
 		int l_coef2 = r_coefs[preamble.leftBlockPredictor];
 
 		// For each left and right nibble
-		for (auto i = 0; i < samplesPerBlock / 2; i++) {
+		for (auto i = 0; i < (samplesPerBlock - 2); i++) {
 			int l_nibble = b.getAudioFrames().at(i)->half.left;
 
 			int l_predictor = ((l_samples.sample1 * l_coef1) +
@@ -331,7 +333,8 @@ PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
 			l_samples.sample2 = l_samples.sample1;
 			l_samples.sample1 = pcm_val;
 
-			l_delta = AdaptationTable[l_nibble] * l_delta / 256;
+			l_delta = AdaptationTable[b.getAudioFrames().at(i)->uhalf.left] *
+					  (l_delta / 256);
 			if (l_delta < -16) {
 				l_delta = 16;
 			} else if (l_delta > 16) {
