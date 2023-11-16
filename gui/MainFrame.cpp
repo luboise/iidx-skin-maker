@@ -38,7 +38,8 @@ MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Hello World") {
 	mainBar->Append(menuHelp, "&Help");
 	SetMenuBar(mainBar);
 
-	ChangeContentsDirectory("/home/luboise/iidx-skin-maker/test/contents/data");
+	// ChangeContentsDirectory("/home/luboise/iidx-skin-maker/test/contents/data");
+	ChangeContentsDirectory("C:/LDJ-003-2022101900/contents/data");
 
 	CreateStatusBar();
 	SetStatusText("Welcome to wxWidgets!");
@@ -123,6 +124,10 @@ void MainFrame::BuildContentsTreeRecursive(const wxTreeItemId& currentNodeID,
 	// Check everything in the current directory
 	for (const auto& file : currentDir->getFiles()) {
 		// std::cout << file << std::endl;
+
+		auto name = file.filename().string();
+		if (!name.ends_with(".sd9")) continue;
+
 		this->contentsTree->AppendItem(currentNodeID, file.filename().string(),
 									   -1, -1, new ContentsTreeItemData(file));
 	}

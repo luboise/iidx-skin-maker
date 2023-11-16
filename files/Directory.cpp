@@ -6,7 +6,7 @@ Directory::Directory(fs::path path) {
 	this->subdirs;
 }
 
-string Directory::getName() const { return this->path.filename(); }
+string Directory::getName() const { return this->path.filename().string(); }
 
 fs::path Directory::getPath() const { return this->path; }
 
