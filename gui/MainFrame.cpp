@@ -39,7 +39,7 @@ MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Hello World") {
 	SetMenuBar(mainBar);
 
 	// ChangeContentsDirectory("/home/luboise/iidx-skin-maker/test/contents/data");
-	ChangeContentsDirectory("C:/LDJ-003-2022101900/contents/data");
+	// ChangeContentsDirectory("C:/LDJ-003-2022101900/contents/data");
 
 	CreateStatusBar();
 	SetStatusText("Welcome to wxWidgets!");
@@ -75,7 +75,15 @@ void MainFrame::OnOpenNewContentsFolder(wxCommandEvent& event) {
 		return;
 	}
 
-	ChangeContentsDirectory(dir.ToStdString());
+	string path = dir.ToStdString();
+
+	// auto pos = path.find("\\");
+	// while (pos != string::npos) {
+	// 	path.replace(pos, 1, "/");
+	// 	pos = path.find("\\");
+	// }
+
+	ChangeContentsDirectory(path);
 }
 
 void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
