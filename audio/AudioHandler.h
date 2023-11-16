@@ -7,8 +7,6 @@
 
 #include "../files/FileHandler.h"
 
-#define STEREO_PREAMBLE_SIZE 14
-
 using std::string;
 
 typedef unsigned int u32;
@@ -19,27 +17,38 @@ typedef short i16;
 
 union AudioFrame {
 	struct {
-		unsigned int right : 4;	 // 4 bits for the right half
-		unsigned int left : 4;	 // 4 bits for the left half
+		int right : 4;	// 4 bits for the right half
+		int left : 4;	// 4 bits for the left half
 	} half;
+	struct {
+		unsigned int right : 4;	 // 4 bits for the right half
+		unsigned left : 4;		 // 4 bits for the left half
+	} uhalf;
 	char full;	// 8-bit representation
 };
 
+struct PCMFrame {
+	i16 leftSample;
+	i16 rightSample;
+};
+
 struct StereoPreamble {
-	i8 leftBlockPredictor;
-	i8 rightBlockPredictor;
+	u8 leftBlockPredictor;
+	u8 rightBlockPredictor;
 	i16 leftInitialDelta;
 	i16 rightInitialDelta;
-	i16 leftSample1;
-	i16 rightSample1;
 	i16 leftSample2;
 	i16 rightSample2;
+	i16 leftSample1;
+	i16 rightSample1;
 };
 
 class Block {
    public:
 	Block(StereoPreamble preamble);
 	~Block();
+
+	StereoPreamble getPreamble() const;
 
 	void insertAudioFrame(AudioFrame *af);
 	const vector<AudioFrame *> &getAudioFrames() const;
@@ -49,45 +58,19 @@ class Block {
 	vector<AudioFrame *> m_audioframes;
 };
 
-class AudioHandler {
-   public:
-	static bool Init();
-	static void Terminate();
-
-	static void PlaySound(char *wavFile, unsigned long dataSize);
-	static void TestSound();
-
-   private:
-	static PaStream *stream;
-
-	/* This routine will be called by the PortAudio engine when audio is needed.
-	 * It may called at interrupt level on some machines so don't do anything
-	 * that could mess up the system like calling malloc() or free().
-	 */
-
-	static int audioCallback(const void *inputBuffer, void *outputBuffer,
-							 unsigned long framesPerBuffer,
-							 const PaStreamCallbackTimeInfo *timeInfo,
-							 PaStreamCallbackFlags statusFlags, void *userData);
-};
-
-class PCMBufferManager {
-   public:
-	PCMBufferManager(const vector<Block *> &adpcmBlocks,
-					 unsigned long samplesPerBlock, unsigned long bufferSize);
-	AudioFrame &GetFrame();
-
-   private:
-	unsigned long frameCounter;
-	unsigned long bufferPosition;
-	std::vector<AudioFrame *> buffers;
-};
-
 class ADPCMData {
 	friend class PCMData;
 
    public:
 	ADPCMData(fs::path filepath);
+
+	const vector<Block *> getBlocks() const;
+
+	short *getLCoefs() const;
+	short *getRCoefs() const;
+	size_t getCoefCount() const;
+
+	u16 getSamplesPerBlock() const;
 
    private:
 	i8 sd9bytes[SD9_HEADER_SIZE];
@@ -122,7 +105,8 @@ class ADPCMData {
 		u16 numCoefficients;
 
 		// Signed decoding coefficients, going L1, R1, L2, R2, etc etc
-		short **coefficients;
+		short *l_coefs;
+		short *r_coefs;
 
 	} fmtChunk;
 
@@ -139,9 +123,44 @@ class ADPCMData {
 	} dataChunk;
 };
 
+class PCMBufferManager {
+   public:
+	PCMBufferManager(const ADPCMData &adpcm, size_t PCMBufferSize);
+	PCMFrame &GetFrame();
+
+   private:
+	unsigned long frameCounter;
+	unsigned long bufferPosition;
+	std::vector<PCMFrame *> frames;
+};
+
+class AudioHandler {
+   public:
+	static bool Init();
+	static void Terminate();
+
+	static void PlaySound(char *wavFile, unsigned long dataSize);
+	static void PlayPCM(PCMBufferManager &bm);
+	static void TestSound();
+
+   private:
+	static PaStream *stream;
+
+	/* This routine will be called by the PortAudio engine when audio is needed.
+	 * It may called at interrupt level on some machines so don't do anything
+	 * that could mess up the system like calling malloc() or free().
+	 */
+
+	static int audioCallback(const void *inputBuffer, void *outputBuffer,
+							 unsigned long framesPerBuffer,
+							 const PaStreamCallbackTimeInfo *timeInfo,
+							 PaStreamCallbackFlags statusFlags, void *userData);
+};
+
 class PCMData {
    public:
 	PCMData(const ADPCMData &adpcm);
+	PCMBufferManager &getBufferManager();
 
    private:
 	i8 sd9bytes[SD9_HEADER_SIZE];

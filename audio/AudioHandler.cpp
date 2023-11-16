@@ -3,6 +3,10 @@
 #include <fstream>
 #include <stdexcept>
 
+// TODO: REMOVE LATER DEBUG ONLY
+#include <iostream>
+#include <sstream>
+
 using std::ifstream;
 
 bool AudioHandler::Init() {
@@ -41,6 +45,24 @@ void AudioHandler::PlaySound(char *wavData, unsigned long dataSize) {
 	// }
 }
 
+void AudioHandler::PlayPCM(PCMBufferManager &bm) {
+	PaStream *stream;
+
+	PaError err;
+
+	err = Pa_OpenDefaultStream(&stream, 0, 2, paInt16, 44100, 512,
+							   &AudioHandler::audioCallback, &bm);
+
+	if (err != paNoError) {
+		throw std::logic_error("Unable to initialise audio stream.");
+	}
+
+	err = Pa_StartStream(stream);
+	if (err != paNoError) {
+		throw std::logic_error("Bad stream received.");
+	}
+}
+
 void AudioHandler::TestSound() {}
 
 int AudioHandler::audioCallback(const void *inputBuffer, void *outputBuffer,
@@ -52,56 +74,44 @@ int AudioHandler::audioCallback(const void *inputBuffer, void *outputBuffer,
 	PCMBufferManager &bm = *(PCMBufferManager *)userData;
 
 	// Read the output buffer
-	float *out = (float *)outputBuffer;
+	i16 *out = (i16 *)outputBuffer;
 
 	(void)inputBuffer; /* Prevent unused variable warning. */
 
 	for (unsigned i = 0; i < framesPerBuffer; i++) {
-		AudioFrame frame = bm.GetFrame();
+		const PCMFrame &frame = bm.GetFrame();
 
-		*out++ = (frame.half.left / 15.0f) * 2 - 1;	 /* left */
-		*out++ = (frame.half.right / 15.0f) * 2 - 1; /* right */
+		*out++ = frame.leftSample;
+		*out++ = frame.rightSample; /* right */
+
+		// std::cout << "(" << frame.leftSample << "," << frame.rightSample <<
+		// ")"
+		// 		  << std::endl;
 	}
 	return paContinue;
 };
 
-// PCMBufferManager::PCMBufferManager(char *chars, unsigned long charCount) {
-// 	// TODO: REMOVE
-// 	auto FRAMES_PER_BUFFER = 256;
-
-// 	this->bufferPosition = 0;
-// 	this->frameCounter = 0;
-
-// 	unsigned long charTracker = 0;
-
-// 	while (charTracker < charCount) {
-// 		// Create a new buffer
-// 		AudioFrame *newBuffer = new AudioFrame[FRAMES_PER_BUFFER];
-
-// 		// Copy the data across from the old buffer
-// 		for (auto i = 0; i < FRAMES_PER_BUFFER; i++) {
-// 			newBuffer[i].full = chars[charTracker++];
-
-// 			if ((charTracker + i) >= charCount) {
-// 				break;
-// 			}
-
-// 			buffers.push_back(newBuffer);
-// 		}
-// 	}
-// }
-
-AudioFrame &PCMBufferManager::GetFrame() {
+PCMFrame &PCMBufferManager::GetFrame() {
 	// TODO: REMOVE
-	auto FRAMES_PER_BUFFER = 256;
+	// auto FRAMES_PER_BUFFER = 256;
 
-	AudioFrame &returnVal = buffers[this->frameCounter][this->bufferPosition++];
+	// PCMFrame &returnVal = frames[this->frameCounter][this->bufferPosition++];
 
-	if (bufferPosition >= FRAMES_PER_BUFFER) {
-		bufferPosition = 0;
-		this->frameCounter++;
-	}
-	return returnVal;
+	// if (bufferPosition >= FRAMES_PER_BUFFER) {
+	// 	bufferPosition = 0;
+	// 	this->frameCounter++;
+	// }
+	// return returnVal;
+
+	return *this->frames[this->frameCounter++];
+
+	// PCMFrame &returnVal = frames[this->frameCounter][this->bufferPosition++];
+
+	// if (bufferPosition >= FRAMES_PER_BUFFER) {
+	// 	bufferPosition = 0;
+	// 	this->frameCounter++;
+	// }
+	// return returnVal;
 }
 
 template <typename T>
@@ -124,26 +134,23 @@ ADPCMData::ADPCMData(fs::path filepath) {
 
 	// Get the first subchunk
 	ifs.read(reinterpret_cast<char *>(&this->fmtChunk),
-			 sizeof(this->fmtChunk) - sizeof(this->fmtChunk.coefficients) - 2);
-
-	// Swap the blockAlign to big endian
-	swap16<u16>(this->fmtChunk.blockAlign);
+			 sizeof(this->fmtChunk) - 2 * sizeof(this->fmtChunk.l_coefs) - 2);
 
 	// Initialise the coefficients
 	auto x = this->fmtChunk.numCoefficients;
-	short **coefs = new short *[2];
-	for (int i = 0; i < 2; ++i) {
-		coefs[i] = new short[x];
-	}
+
+	short *l_coefs = new short[x];
+	short *r_coefs = new short[x];
 
 	// Read the coefficients from the file
 	for (auto i = 0; i < x; i++) {
-		ifs.read(reinterpret_cast<char *>(&coefs[0][i]), sizeof(short));
-		ifs.read((char *)&coefs[1][i], sizeof(short));
+		ifs.read(reinterpret_cast<char *>(&l_coefs[i]), sizeof(short));
+		ifs.read(reinterpret_cast<char *>(&r_coefs[i]), sizeof(short));
 	}
 
 	// Write them to the struct
-	this->fmtChunk.coefficients = coefs;
+	this->fmtChunk.l_coefs = l_coefs;
+	this->fmtChunk.r_coefs = r_coefs;
 
 	// Get the fact subchunk
 	ifs.read(reinterpret_cast<char *>(&this->factChunk),
@@ -153,34 +160,61 @@ ADPCMData::ADPCMData(fs::path filepath) {
 	ifs.read(reinterpret_cast<char *>(&dataChunk),
 			 sizeof(dataChunk.dataString) + sizeof(dataChunk.chunkSize));
 
-	u32 blockSize = sizeof(StereoPreamble) +
-					((fmtChunk.samplesPerBlock * fmtChunk.bitsPerSample)) / 8;
+	// u32 blockSize = sizeof(StereoPreamble) +
+	// 				((fmtChunk.samplesPerBlock * fmtChunk.bitsPerSample)) / 8;
+	u32 blockSize = fmtChunk.blockAlign;
 
 	for (auto i = 0; i < dataChunk.chunkSize; i += blockSize) {
-		StereoPreamble sp;
-		ifs.read(reinterpret_cast<char *>(&sp), sizeof(sp));
-		Block *b = new Block(sp);
+		try {
+			StereoPreamble sp;
+			ifs.read(reinterpret_cast<char *>(&sp), sizeof(sp));
 
-		u16 j;
+			// swap16<i16>(sp.leftInitialDelta);
+			// swap16<i16>(sp.rightInitialDelta);
 
-		for (j = 0; j < fmtChunk.samplesPerBlock; j += 2) {
-			AudioFrame *af = new AudioFrame;
-			ifs.read(&af->full, sizeof(af->full));
-			b->insertAudioFrame(af);
+			Block *b = new Block(sp);
+
+			u16 j;
+
+			// Exclude the 2 samples in the header
+			for (j = 0; j < fmtChunk.samplesPerBlock - 2; j++) {
+				AudioFrame *af = new AudioFrame;
+				ifs.read(&af->full, sizeof(af->full));
+				b->insertAudioFrame(af);
+			}
+
+			this->dataChunk.blocks.push_back(b);
+
+			if (j > fmtChunk.samplesPerBlock) {
+				throw std::logic_error(
+					"A sample has been read that doesn't exist (j too high)");
+			}
+		} catch (std::exception e) {
+			std::cout << "Exception caught: " << e.what() << std::endl;
+			return;
 		}
-
-		this->dataChunk.blocks.push_back(b);
-
-		if (j > fmtChunk.samplesPerBlock) {
-			throw std::logic_error(
-				"A sample has been read that doesn't exist (j too high)");
-		};
 	}
 
-	if (!ifs.eof()) {
-		throw std::invalid_argument(
-			"End of file not reached after ADPCM blocks imported.");
-	}
+	// TODO: UNCOMMENT WHEN DONE DEBUGGING
+	// if (!ifs.eof()) {
+	// 	throw std::invalid_argument(
+	// 		"End of file not reached after ADPCM blocks imported.");
+	// }
+}
+
+const vector<Block *> ADPCMData::getBlocks() const {
+	return this->dataChunk.blocks;
+}
+
+short *ADPCMData::getLCoefs() const { return this->fmtChunk.l_coefs; }
+short *ADPCMData::getRCoefs() const { return this->fmtChunk.r_coefs; }
+
+size_t ADPCMData::getCoefCount() const {
+	return this->fmtChunk.numCoefficients;
+}
+
+u16 ADPCMData::getSamplesPerBlock() const {
+	return this->fmtChunk.samplesPerBlock;
 }
 
 Block::Block(StereoPreamble preamble) { this->m_preamble = preamble; }
@@ -193,6 +227,8 @@ Block::~Block() {
 		}
 	}
 }
+
+StereoPreamble Block::getPreamble() const { return this->m_preamble; }
 
 void Block::insertAudioFrame(AudioFrame *af) {
 	this->m_audioframes.push_back(af);
@@ -212,14 +248,103 @@ PCMData::PCMData(const ADPCMData &adpcm) {
 	this->fmtChunk.avrgBytesPerSecond = adpcm.fmtChunk.avrgBytesPerSecond;
 	this->fmtChunk.blockAlign = adpcm.fmtChunk.blockAlign;
 
-	this->bm = new PCMBufferManager(adpcm.dataChunk.blocks,
-									adpcm.fmtChunk.samplesPerBlock, 1536);
+	this->bm = new PCMBufferManager(adpcm, 1536);
 }
 
-PCMBufferManager::PCMBufferManager(const vector<Block *> &adpcmBlocks,
-								   unsigned long samplesPerBlock,
-								   unsigned long BufferSize) {
+PCMBufferManager &PCMData::getBufferManager() { return *this->bm; }
+
+const int AdaptationTable[] = {230, 230, 230, 230, 307, 409, 512, 614,
+							   768, 614, 512, 409, 307, 230, 230, 230};
+
+PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
+								   size_t PCMBufferSize) {
+	this->bufferPosition = 0;
+
+	u16 samplesPerBlock = adpcm.getSamplesPerBlock();
+
+	const vector<Block *> &adpcmBlocks = adpcm.getBlocks();
+
+	const size_t num_coefficients = adpcm.getCoefCount();
+	const auto l_coefs = adpcm.getLCoefs();
+	const auto r_coefs = adpcm.getRCoefs();
+
 	for (const Block *bPtr : adpcmBlocks) {
-		// Get
+		auto &b = *bPtr;
+
+		auto preamble = b.getPreamble();
+
+		struct {
+			i16 sample1;
+			i16 sample2;
+		} l_samples, r_samples;
+
+		// TODO: UNCOMMENT THIS AND FIX IT IN ADPCM INSTEAD
+		// l_samples.sample1 = preamble.leftSample1;
+		// l_samples.sample2 = preamble.leftSample2;
+
+		l_samples.sample1 = preamble.leftSample2;
+		l_samples.sample2 = preamble.leftSample1;
+
+		r_samples.sample1 = 0;
+		r_samples.sample2 = 0;
+
+		PCMFrame frame;
+		frame = {l_samples.sample1, r_samples.sample1};
+		frames.push_back(new PCMFrame(frame));
+
+		frame = {l_samples.sample2, r_samples.sample2};
+
+		frames.push_back(new PCMFrame(frame));
+
+		auto l_delta = preamble.leftInitialDelta;
+		// auto r_delta = preamble.rightInitialDelta;
+
+		if (preamble.leftBlockPredictor >= num_coefficients ||
+			preamble.rightBlockPredictor >= num_coefficients) {
+			std::stringstream ss;
+
+			ss << "Invalid indices received: " << preamble.leftBlockPredictor
+			   << "|" << preamble.rightBlockPredictor << " (max of "
+			   << num_coefficients << " applies to both)";
+			throw std::invalid_argument(ss.str());
+		}
+
+		int l_coef1 = l_coefs[preamble.leftBlockPredictor];
+		int l_coef2 = r_coefs[preamble.leftBlockPredictor];
+
+		// For each left and right nibble
+		for (auto i = 0; i < (samplesPerBlock - 2); i++) {
+			int l_nibble = b.getAudioFrames().at(i)->half.left;
+
+			int l_predictor = ((l_samples.sample1 * l_coef1) +
+							   (l_samples.sample2 * l_coef2)) /
+							  256;
+
+			l_predictor += l_nibble * l_delta;
+
+			i16 pcm_val = l_predictor;
+
+			std::cout << pcm_val << ",";
+
+			frame = {pcm_val, 0};
+
+			frames.push_back(new PCMFrame(frame));
+
+			l_samples.sample2 = l_samples.sample1;
+			l_samples.sample1 = pcm_val;
+
+			l_delta = AdaptationTable[b.getAudioFrames().at(i)->uhalf.left] *
+					  (l_delta / 256);
+			if (l_delta < -16) {
+				l_delta = 16;
+			} else if (l_delta > 16) {
+				l_delta = 16;
+			}
+		}
+
+		std::cout << std::endl;
 	}
+
+	this->frameCounter = 0;
+	this->bufferPosition = 0;
 }
