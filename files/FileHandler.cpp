@@ -19,6 +19,7 @@ Directory* FileHandler::scanDirectory(const fs::path& baseDir) {
 	return tree;
 }
 
+/*
 char* FileHandler::readSD9File(fs::path filePath, size_t& dataSize) {
 	ifstream ifs(filePath, std::ios::binary);
 
@@ -36,6 +37,7 @@ char* FileHandler::readSD9File(fs::path filePath, size_t& dataSize) {
 	dataSize = parseAmount;
 	return wavData;
 };
+*/
 
 void FileHandler::buildTreeRecursive(Directory* currentDir) {
 	// Check everything in the current directory

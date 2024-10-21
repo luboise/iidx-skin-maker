@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../files/FileHandler.h"
+#include "SD9File.h"
 
 using std::string;
 
@@ -141,6 +142,7 @@ class AudioHandler {
 
 	static void PlaySound(char *wavFile, unsigned long dataSize);
 	static void PlayPCM(PCMBufferManager &bm);
+	static void PlaySD9(SD9File &);
 	static void TestSound();
 
    private:

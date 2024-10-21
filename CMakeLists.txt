@@ -49,7 +49,7 @@ endif()
 
 add_subdirectory(extern/portaudio)
 
-# find_package(portaudio REQUIRED)
+find_package(SndFile REQUIRED)
 
 # Extra Folders
 file(GLOB FILESYSTEM_SOURCES "files/*.cpp" "files/*.h")
@@ -59,6 +59,7 @@ file(GLOB AUDIO_SOURCES "audio/*.cpp" "audio/*.h")
 add_executable(${PROJECT_NAME} main.cpp ${FILESYSTEM_SOURCES} ${GUI_SOURCES}
                                ${AUDIO_SOURCES})
 
+# find_package(portaudio REQUIRED)
 if(WIN32)
   target_include_directories(
     ${CMAKE_PROJECT_NAME} PRIVATE gui file
@@ -69,9 +70,12 @@ if(WIN32)
     PRIVATE ${wxWidgets_LIBRARIES}
             "C:/Program Files (x86)/portaudio/bin/libportaudio.dll")
 else()
-  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES}
-                                                      -lportaudio)
+
 endif()
+
+target_link_libraries(
+  ${CMAKE_PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES} SndFile::sndfile
+                                -lportaudio)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

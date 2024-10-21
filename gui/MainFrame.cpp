@@ -1,11 +1,18 @@
 #include "MainFrame.h"
 
 #include <portaudio.h>
+#include <wx/msgdlg.h>
 #include <wx/mstream.h>
 #include <wx/sound.h>
 
+#include <fstream>
+#include <stdexcept>
+
 #include "../audio/AudioHandler.h"
+#include "../audio/SD9File.h"
 #include "../files/FileHandler.h"
+
+using std::ifstream;
 
 class ContentsTreeItemData : public wxTreeItemData {
    public:
@@ -97,17 +104,23 @@ void MainFrame::OnClickContentsFile(wxTreeEvent& event) {
 		fs::path p = treeItem.GetFilePath();
 
 		if (fs::exists(p)) {
-			auto adpcm = ADPCMData(p);
+			std::string path = p.string();
 
-			// Attempt to convert the data to pcm
 			try {
-				auto pcm = PCMData(adpcm);
-				auto& bm = pcm.getBufferManager();
-				AudioHandler::PlayPCM(bm);
-			} catch (std::exception e) {
+				ifstream ifs(p);
+
+				SD9File* song = new SD9File(ifs);
+				AudioHandler::PlaySD9(*song);
+
+				// AudioHandler::PlayPCM(bm);
+			} catch (std::runtime_error e) {
 				std::stringstream ss;
-				ss << "ERROR: Can't convert ADPCM to PCM. (" << e.what() << ")";
-				wxMessageBox(ss.str());
+				ss << "ERROR: Unable to play file from path \"" << path
+				   << "\". \nError message: " << e.what() << ")";
+				wxMessageBox(ss.str().c_str());
+
+			} catch (std::exception e) {
+				wxMessageBox("An unhandled exception has occurred.");
 			}
 		}
 

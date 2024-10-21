@@ -7,7 +7,15 @@
 #include <iostream>
 #include <sstream>
 
+#include "SD9File.h"
+
 using std::ifstream;
+
+struct PlaybackSet {
+	SD9File* sd9;
+	size_t next_frame;
+	size_t total_frames;
+};
 
 bool AudioHandler::Init() {
 	auto err = Pa_Initialize();
@@ -21,13 +29,13 @@ bool AudioHandler::Init() {
 
 void AudioHandler::Terminate() { Pa_Terminate(); }
 
-void AudioHandler::PlaySound(char *wavData, unsigned long dataSize) {
-	PaStream *stream;
+void AudioHandler::PlaySound(char* wavData, unsigned long dataSize) {
+	PaStream* stream;
 
 	PaError err;
 
 	// Parse the wav file into relevant information
-	// PCMBufferManager *bm = new PCMBufferManager(wavData, dataSize);
+	// PCMBufferManager* bm = new PCMBufferManager(wavData, dataSize);
 
 	return;
 
@@ -45,8 +53,8 @@ void AudioHandler::PlaySound(char *wavData, unsigned long dataSize) {
 	// }
 }
 
-void AudioHandler::PlayPCM(PCMBufferManager &bm) {
-	PaStream *stream;
+void AudioHandler::PlayPCM(PCMBufferManager& bm) {
+	PaStream* stream;
 
 	PaError err;
 
@@ -63,26 +71,79 @@ void AudioHandler::PlayPCM(PCMBufferManager &bm) {
 	}
 }
 
-void AudioHandler::TestSound() {}
-
-int AudioHandler::audioCallback(const void *inputBuffer, void *outputBuffer,
-								unsigned long framesPerBuffer,
-								const PaStreamCallbackTimeInfo *timeInfo,
-								PaStreamCallbackFlags statusFlags,
-								void *userData) {
-	// Get the buffer manager
-	PCMBufferManager &bm = *(PCMBufferManager *)userData;
+int SD9Callback(const void* input, void* out_buffer, unsigned long frame_count,
+				const PaStreamCallbackTimeInfo* timeInfo,
+				PaStreamCallbackFlags statusFlags, void* userData) {
+	auto playback_set = (PlaybackSet*)userData;
+	auto* sound_file = playback_set->sd9->getSoundFile();
 
 	// Read the output buffer
-	i16 *out = (i16 *)outputBuffer;
+	float* out = (float*)out_buffer;
 
-	(void)inputBuffer; /* Prevent unused variable warning. */
+	for (unsigned i = 0; i < frame_count; i++) {
+		size_t frame_index = playback_set->next_frame + i;
+		if (frame_index >= playback_set->total_frames) {
+			return paComplete;
+		}
+
+		const auto& frame = sound_file->getFrame(frame_index);
+
+		for (const auto& sample : frame) {
+			std::cout << sample << ",";
+			*out++ = sample;
+		}
+		std::cout << std::endl;
+	}
+
+	playback_set->next_frame += frame_count;
+	return paContinue;
+};
+
+void AudioHandler::PlaySD9(SD9File& sd9) {
+	PaStream* stream;
+
+	PaError err;
+
+	auto playback_set = new PlaybackSet{};
+
+	playback_set->sd9 = &sd9;
+	playback_set->next_frame = 0;
+	playback_set->total_frames = sd9.getSoundFile()->getFrameCount();
+
+	err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 44100, 128, &SD9Callback,
+							   playback_set);
+
+	if (err != paNoError) {
+		throw std::logic_error("Unable to initialise audio stream.");
+	}
+
+	err = Pa_StartStream(stream);
+	if (err != paNoError) {
+		throw std::logic_error("Bad stream received.");
+	}
+};
+
+void AudioHandler::TestSound() {}
+
+int AudioHandler::audioCallback(const void* inputBuffer, void* outputBuffer,
+								unsigned long framesPerBuffer,
+								const PaStreamCallbackTimeInfo* timeInfo,
+								PaStreamCallbackFlags statusFlags,
+								void* userData) {
+	// Get the buffer manager
+	PCMBufferManager& bm = *(PCMBufferManager*)userData;
+
+	// Read the output buffer
+	i16* out = (i16*)outputBuffer;
+
+	(void)inputBuffer;
+	/* Prevent unused variable warning.*/
 
 	for (unsigned i = 0; i < framesPerBuffer; i++) {
-		const PCMFrame &frame = bm.GetFrame();
+		const PCMFrame& frame = bm.GetFrame();
 
 		*out++ = frame.leftSample;
-		*out++ = frame.rightSample; /* right */
+		*out++ = frame.rightSample;
 
 		// std::cout << "(" << frame.leftSample << "," << frame.rightSample <<
 		// ")"
@@ -91,7 +152,7 @@ int AudioHandler::audioCallback(const void *inputBuffer, void *outputBuffer,
 	return paContinue;
 };
 
-PCMFrame &PCMBufferManager::GetFrame() {
+PCMFrame& PCMBufferManager::GetFrame() {
 	// TODO: REMOVE
 	// auto FRAMES_PER_BUFFER = 256;
 
@@ -115,7 +176,7 @@ PCMFrame &PCMBufferManager::GetFrame() {
 }
 
 template <typename T>
-T &swap16(T &block) {
+T& swap16(T& block) {
 	block = block << 8 | block >> 8;
 	return block;
 }
@@ -129,23 +190,23 @@ ADPCMData::ADPCMData(fs::path filepath) {
 	ifs.read(this->sd9bytes, SD9_HEADER_SIZE);
 
 	// Get the RIFF chunk
-	ifs.read(reinterpret_cast<char *>(&this->riffChunk),
+	ifs.read(reinterpret_cast<char*>(&this->riffChunk),
 			 sizeof(this->riffChunk));
 
 	// Get the first subchunk
-	ifs.read(reinterpret_cast<char *>(&this->fmtChunk),
+	ifs.read(reinterpret_cast<char*>(&this->fmtChunk),
 			 sizeof(this->fmtChunk) - 2 * sizeof(this->fmtChunk.l_coefs) - 2);
 
 	// Initialise the coefficients
 	auto x = this->fmtChunk.numCoefficients;
 
-	short *l_coefs = new short[x];
-	short *r_coefs = new short[x];
+	short* l_coefs = new short[x];
+	short* r_coefs = new short[x];
 
 	// Read the coefficients from the file
 	for (auto i = 0; i < x; i++) {
-		ifs.read(reinterpret_cast<char *>(&l_coefs[i]), sizeof(short));
-		ifs.read(reinterpret_cast<char *>(&r_coefs[i]), sizeof(short));
+		ifs.read(reinterpret_cast<char*>(&l_coefs[i]), sizeof(short));
+		ifs.read(reinterpret_cast<char*>(&r_coefs[i]), sizeof(short));
 	}
 
 	// Write them to the struct
@@ -153,32 +214,32 @@ ADPCMData::ADPCMData(fs::path filepath) {
 	this->fmtChunk.r_coefs = r_coefs;
 
 	// Get the fact subchunk
-	ifs.read(reinterpret_cast<char *>(&this->factChunk),
+	ifs.read(reinterpret_cast<char*>(&this->factChunk),
 			 sizeof(this->factChunk));
 
 	// Get data section header
-	ifs.read(reinterpret_cast<char *>(&dataChunk),
+	ifs.read(reinterpret_cast<char*>(&dataChunk),
 			 sizeof(dataChunk.dataString) + sizeof(dataChunk.chunkSize));
 
 	// u32 blockSize = sizeof(StereoPreamble) +
-	// 				((fmtChunk.samplesPerBlock * fmtChunk.bitsPerSample)) / 8;
+	// 				((fmtChunk.samplesPerBlock*  fmtChunk.bitsPerSample)) / 8;
 	u32 blockSize = fmtChunk.blockAlign;
 
 	for (auto i = 0; i < dataChunk.chunkSize; i += blockSize) {
 		try {
 			StereoPreamble sp;
-			ifs.read(reinterpret_cast<char *>(&sp), sizeof(sp));
+			ifs.read(reinterpret_cast<char*>(&sp), sizeof(sp));
 
 			// swap16<i16>(sp.leftInitialDelta);
 			// swap16<i16>(sp.rightInitialDelta);
 
-			Block *b = new Block(sp);
+			Block* b = new Block(sp);
 
 			u16 j;
 
 			// Exclude the 2 samples in the header
 			for (j = 0; j < fmtChunk.samplesPerBlock - 2; j++) {
-				AudioFrame *af = new AudioFrame;
+				AudioFrame* af = new AudioFrame;
 				ifs.read(&af->full, sizeof(af->full));
 				b->insertAudioFrame(af);
 			}
@@ -202,12 +263,12 @@ ADPCMData::ADPCMData(fs::path filepath) {
 	// }
 }
 
-const vector<Block *> ADPCMData::getBlocks() const {
+const vector<Block*> ADPCMData::getBlocks() const {
 	return this->dataChunk.blocks;
 }
 
-short *ADPCMData::getLCoefs() const { return this->fmtChunk.l_coefs; }
-short *ADPCMData::getRCoefs() const { return this->fmtChunk.r_coefs; }
+short* ADPCMData::getLCoefs() const { return this->fmtChunk.l_coefs; }
+short* ADPCMData::getRCoefs() const { return this->fmtChunk.r_coefs; }
 
 size_t ADPCMData::getCoefCount() const {
 	return this->fmtChunk.numCoefficients;
@@ -230,15 +291,15 @@ Block::~Block() {
 
 StereoPreamble Block::getPreamble() const { return this->m_preamble; }
 
-void Block::insertAudioFrame(AudioFrame *af) {
+void Block::insertAudioFrame(AudioFrame* af) {
 	this->m_audioframes.push_back(af);
 }
 
-const vector<AudioFrame *> &Block::getAudioFrames() const {
+const vector<AudioFrame*>& Block::getAudioFrames() const {
 	return this->m_audioframes;
 }
 
-PCMData::PCMData(const ADPCMData &adpcm) {
+PCMData::PCMData(const ADPCMData& adpcm) {
 	this->riffChunk.dataSize = adpcm.riffChunk.dataSize;
 
 	this->fmtChunk.chunkSize = adpcm.fmtChunk.chunkSize;
@@ -251,25 +312,25 @@ PCMData::PCMData(const ADPCMData &adpcm) {
 	this->bm = new PCMBufferManager(adpcm, 1536);
 }
 
-PCMBufferManager &PCMData::getBufferManager() { return *this->bm; }
+PCMBufferManager& PCMData::getBufferManager() { return *this->bm; }
 
 const int AdaptationTable[] = {230, 230, 230, 230, 307, 409, 512, 614,
 							   768, 614, 512, 409, 307, 230, 230, 230};
 
-PCMBufferManager::PCMBufferManager(const ADPCMData &adpcm,
+PCMBufferManager::PCMBufferManager(const ADPCMData& adpcm,
 								   size_t PCMBufferSize) {
 	this->bufferPosition = 0;
 
 	u16 samplesPerBlock = adpcm.getSamplesPerBlock();
 
-	const vector<Block *> &adpcmBlocks = adpcm.getBlocks();
+	const vector<Block*>& adpcmBlocks = adpcm.getBlocks();
 
 	const size_t num_coefficients = adpcm.getCoefCount();
 	const auto l_coefs = adpcm.getLCoefs();
 	const auto r_coefs = adpcm.getRCoefs();
 
-	for (const Block *bPtr : adpcmBlocks) {
-		auto &b = *bPtr;
+	for (const Block* bPtr : adpcmBlocks) {
+		auto& b = *bPtr;
 
 		auto preamble = b.getPreamble();
 
