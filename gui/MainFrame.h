@@ -1,35 +1,18 @@
-// For compilers that support precompilation, includes "wx/wx.h".
 #include <wx/treectrl.h>
-#include <wx/wxprec.h>
 
-#include "../files/Directory.h"
-
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
+class FileSection;
 
 class MainFrame : public wxFrame {
    public:
-	MainFrame();
+	MainFrame(wxWindow* parent = nullptr);
 
    private:
 	// Event Handlers
 	void OnHello(wxCommandEvent& event);
 	void OnExit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
-	void OnOpenNewContentsFolder(wxCommandEvent& event);
-	void OnClickContentsFile(wxTreeEvent& event);
 
-	void ResetContentsTree();
-	void ChangeContentsDirectory(const fs::path& newDir);
-
-	void BuildContentsTree();
-	void BuildContentsTreeRecursive(const wxTreeItemId& currentNode,
-									Directory* currentDir);
-
-	fs::path contentsDirPath;
-	wxTreeCtrl* contentsTree;
-	Directory* rootDir;
+	FileSection* _fileSection = nullptr;
 };
 
 enum { ID_Hello = 1, ID_NewContentsFolder = 2 };

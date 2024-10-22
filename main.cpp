@@ -1,20 +1,13 @@
-// wxWidgets "Hello World" Program
-
-// For compilers that support precompilation, includes "wx/wx.h".
-#include <wx/treectrl.h>
-#include <wx/wxprec.h>
-
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-
 #include "audio/AudioHandler.h"
-#include "files/FileHandler.h"
+// #include "files/FileHandler.h"
 #include "gui/MainFrame.h"
 
 class SkinMakerApp : public wxApp {
    public:
 	virtual bool OnInit();
+
+   private:
+	MainFrame* _mainFrame = nullptr;
 };
 
 wxIMPLEMENT_APP(SkinMakerApp);
@@ -27,8 +20,8 @@ bool SkinMakerApp::OnInit() {
 		exit(EXIT_FAILURE);
 	}
 
-	MainFrame* frame = new MainFrame();
-	frame->Show(true);
+	_mainFrame = new MainFrame();
+	_mainFrame->Show(true);
 
 	return true;
 }

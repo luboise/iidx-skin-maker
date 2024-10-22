@@ -52,31 +52,28 @@ add_subdirectory(extern/portaudio)
 find_package(SndFile REQUIRED)
 
 # Extra Folders
-file(GLOB FILESYSTEM_SOURCES "files/*.cpp" "files/*.h")
-file(GLOB GUI_SOURCES "gui/*.cpp" "gui/*.h")
-file(GLOB AUDIO_SOURCES "audio/*.cpp" "audio/*.h")
+add_executable(iidx-skin-maker main.cpp)
+target_precompile_headers(iidx-skin-maker PRIVATE pch.h)
+add_subdirectory(gui)
+add_subdirectory(files)
+add_subdirectory(audio)
 
-add_executable(${PROJECT_NAME} main.cpp ${FILESYSTEM_SOURCES} ${GUI_SOURCES}
-                               ${AUDIO_SOURCES})
+# target_sources(iidx-skin-maker <INTERFACE|PUBLIC|PRI...> [items1...]
+# [<INTERFACE|PUBLIC|PRI...> [items2...] ...])
 
 # find_package(portaudio REQUIRED)
 if(WIN32)
   target_include_directories(
-    ${CMAKE_PROJECT_NAME} PRIVATE gui file
-                                  "C:/Program Files (x86)/portaudio/include/")
-  # Link wxWidgets
-  target_link_libraries(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE ${wxWidgets_LIBRARIES}
-            "C:/Program Files (x86)/portaudio/bin/libportaudio.dll")
-else()
-
+    ${CMAKE_PROJECT_NAME} PRIVATE "C:/Program Files (x86)/portaudio/include/")
+  target_link_libraries(${CMAKE_PROJECT_NAME}
+                        "C:/Program Files (x86)/portaudio/bin/libportaudio.dll")
 endif()
+
+target_include_directories(iidx-skin-maker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(
   ${CMAKE_PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES} SndFile::sndfile
                                 -lportaudio)
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+# set(CPACK_PROJECT_NAME ${PROJECT_NAME}) set(CPACK_PROJECT_VERSION
+# ${PROJECT_VERSION}) include(CPack)

@@ -1,4 +1,4 @@
 cd ./build &&
 cmake .. && 
-cmake --build . -j 10 && 
+cmake --build . --config Debug -- -j 10 && 
 ./iidx-skin-maker 
