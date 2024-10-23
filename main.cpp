@@ -1,6 +1,6 @@
 #include "audio/AudioHandler.h"
-// #include "files/FileHandler.h"
 #include "gui/MainFrame.h"
+#include "mod_manager/ModManager.h"
 
 class SkinMakerApp : public wxApp {
    public:
@@ -19,6 +19,8 @@ bool SkinMakerApp::OnInit() {
 		wxMessageBox("Unable to initialise sound. Exiting now.");
 		exit(EXIT_FAILURE);
 	}
+
+	ModManager::getInstance().newMod();
 
 	_mainFrame = new MainFrame();
 	_mainFrame->Show(true);

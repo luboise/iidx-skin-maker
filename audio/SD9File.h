@@ -4,6 +4,8 @@
 
 #include "SoundFile.h"
 
+#define SD9_HEADER_SIZE 32
+
 class SD9File {
    public:
 	SD9File(const char* filename);

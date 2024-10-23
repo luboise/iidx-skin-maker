@@ -1,17 +1,18 @@
-#include "FileSection.h"
+#include "FilePanel.h"
 
 #include "audio/AudioHandler.h"
 #include "audio/SD9File.h"
+#include "mod_manager/ModManager.h"
 
-FileSection::FileSection(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
+FilePanel::FilePanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 
 	wxButton* add_entity_button = new wxButton(this, ID_ADD_ENTITY, "+");
 
-	this->_contentsTree = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
-										 wxSize(150, 500), wxTR_DEFAULT_STYLE);
+	this->_treeWidget = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
+									   wxSize(150, 500), wxTR_DEFAULT_STYLE);
 	sizer->Add(add_entity_button);
-	sizer->Add(_contentsTree);
+	sizer->Add(_treeWidget);
 
 	/*
 // Add a list control for objects in the scene
@@ -28,7 +29,7 @@ objectList->InsertItem(2, "Object 3");
 	this->SetSizer(sizer);
 }
 
-void FileSection::OnButtonClick(wxCommandEvent& event) {
+void FilePanel::onButtonClick(wxCommandEvent& event) {
 	wxMessageBox("Button clicked!", "Info", wxOK | wxICON_INFORMATION);
 }
 
@@ -42,13 +43,13 @@ class ContentsTreeItemData : public wxTreeItemData {
 	fs::path filePath;
 };
 
-void FileSection::OnClickContentsFile(wxTreeEvent& event) {
+void FilePanel::onClickContentsFile(wxTreeEvent& event) {
 	wxTreeItemId id = event.GetItem();
 
 	if (id.IsOk()) {
 		// wxMessageBox("You clicked " + contentsTree->GetItemText(id));
 
-		auto treeItem = *(ContentsTreeItemData*)_contentsTree->GetItemData(id);
+		auto treeItem = *(ContentsTreeItemData*)_treeWidget->GetItemData(id);
 
 		fs::path p = treeItem.GetFilePath();
 
@@ -79,7 +80,7 @@ void FileSection::OnClickContentsFile(wxTreeEvent& event) {
 	}
 }
 
-void FileSection::OnOpenNewContentsFolder(wxCommandEvent& event) {
+void FilePanel::onOpenNewContentsFolder(wxCommandEvent& event) {
 	const wxString& dir = wxDirSelector("Select your IIDX Contents Folder");
 
 	if (dir.empty()) {
@@ -95,54 +96,57 @@ void FileSection::OnOpenNewContentsFolder(wxCommandEvent& event) {
 	// 	pos = path.find("\\");
 	// }
 
-	ChangeContentsDirectory(path);
+	if (ModManager::getInstance().changeContentsDirectory(path)) {
+	};
 }
 
-void FileSection::BuildContentsTree() {
-	this->ResetContentsTree();
+void FilePanel::rebuildTree() {
+	this->resetContentsTree();
 
-	auto rootID = this->_contentsTree->AddRoot(
-		this->_rootDir->getName(), -1, -1,
-		new ContentsTreeItemData(this->_rootDir->getPath()));
+	auto root_dir = ModManager::getInstance().getRootDir();
 
-	BuildContentsTreeRecursive(rootID, this->_rootDir);
+	auto rootID = this->_treeWidget->AddRoot(
+		root_dir.getName(), -1, -1,
+		new ContentsTreeItemData(root_dir.getPath()));
+
+	rebuildTreeRec(rootID, root_dir);
 }
 
-void FileSection::BuildContentsTreeRecursive(const wxTreeItemId& currentNodeID,
-											 Directory* currentDir) {
+void FilePanel::rebuildTreeRec(const wxTreeItemId& currentNodeID,
+							   const Directory& currentDir) {
 	// Check everything in the current directory
-	for (const auto& file : currentDir->getFiles()) {
+	for (const auto& file : currentDir.getFiles()) {
 		// std::cout << file << std::endl;
 
 		auto name = file.filename().string();
 		if (!name.ends_with(".sd9")) continue;
 
-		this->_contentsTree->AppendItem(currentNodeID, file.filename().string(),
-										-1, -1, new ContentsTreeItemData(file));
+		this->_treeWidget->AppendItem(currentNodeID, file.filename().string(),
+									  -1, -1, new ContentsTreeItemData(file));
 	}
 
-	for (const auto& dir : currentDir->getDirs()) {
+	for (const auto& dir : currentDir.getDirs()) {
 		// std::cout << dir->getPath() << std::endl;
-		auto newNodeID = this->_contentsTree->AppendItem(
-			currentNodeID, dir->getName(), -1, -1,
-			new ContentsTreeItemData(dir->getPath()));
-		BuildContentsTreeRecursive(newNodeID, dir);
+		auto newNodeID = this->_treeWidget->AppendItem(
+			currentNodeID, dir.getName(), -1, -1,
+			new ContentsTreeItemData(dir.getPath()));
+		rebuildTreeRec(newNodeID, dir);
 	}
 }
 
-void FileSection::ChangeContentsDirectory(const fs::path& newDir) {
-	this->_rootDir = FileHandler::scanDirectory(newDir);
-	this->BuildContentsTree();
-	_contentsTree->ExpandAll();
-}
-
-void FileSection::ResetContentsTree() {
+void FilePanel::resetContentsTree() {
 	// Delete existing tree
-	if (this->_contentsTree != nullptr) {
-		delete this->_contentsTree;
+	/*
+	if (this->_treeWidget != nullptr) {
+		delete this->_treeWidget;
 	}
 
 	// Create a new tree
-	this->_contentsTree = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
-										 wxSize(150, 500), wxTR_DEFAULT_STYLE);
+	this->_treeWidget = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
+									   wxSize(150, 500), wxTR_DEFAULT_STYLE);
+									   */
+
+	_treeWidget->DeleteAllItems();
 }
+
+void FilePanel::onModChanged(const Mod&) { this->rebuildTree(); };

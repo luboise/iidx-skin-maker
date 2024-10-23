@@ -54,9 +54,11 @@ find_package(SndFile REQUIRED)
 # Extra Folders
 add_executable(iidx-skin-maker main.cpp)
 target_precompile_headers(iidx-skin-maker PRIVATE pch.h)
+
 add_subdirectory(gui)
 add_subdirectory(files)
 add_subdirectory(audio)
+add_subdirectory(mod_manager)
 
 # target_sources(iidx-skin-maker <INTERFACE|PUBLIC|PRI...> [items1...]
 # [<INTERFACE|PUBLIC|PRI...> [items2...] ...])

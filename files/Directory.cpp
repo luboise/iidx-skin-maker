@@ -1,23 +1,31 @@
 #include "Directory.h"
 
 Directory::Directory(fs::path path) {
-	this->path = path;
-	this->files;
-	this->subdirs;
-}
+	this->_path = path;
+	this->_files = {};
+	this->_subdirs = {};
 
-string Directory::getName() const { return this->path.filename().string(); }
-
-fs::path Directory::getPath() const { return this->path; }
-
-void Directory::addFile(const fs::path& path) { this->files.push_back(path); }
-
-void Directory::addSubdir(Directory* dir) {
-	if (dir == nullptr) {
-		throw std::logic_error("Received null directory.");
+	if (!fs::exists(path)) {
+		throw std::invalid_argument("Bad path used: " + path.string());
 	}
-	this->subdirs.push_back(dir);
+
+	this->buildDirectory();
 }
 
-std::list<fs::path> Directory::getFiles() const { return this->files; }
-std::list<Directory*> Directory::getDirs() const { return this->subdirs; }
+void Directory::buildDirectory() {
+	// Check everything in the current directory
+	for (const auto& entry : fs::directory_iterator(this->getPath())) {
+		// For each directory, add it to the list and recursively check it
+		if (fs::is_directory(entry)) {
+			Directory child = Directory(entry.path());
+			this->addSubdir(std::move(child));
+		}
+
+		// If its a file, add the filepath to the list of filenames
+		else if (fs::is_regular_file(entry)) {
+			this->addFile(entry.path());
+		}
+	}
+}
+
+void Directory::addFile(const fs::path& path) { this->_files.push_back(path); }

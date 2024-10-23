@@ -6,13 +6,13 @@
 #include <wx/sound.h>
 
 #include "gui/MainMenuBar.h"
-#include "gui/Panels/FileSection.h"
+#include "gui/Panels/FilePanel.h"
 
 MainFrame::MainFrame(wxWindow* parent)
 	: wxFrame(NULL, wxID_ANY, "Hello World") {
 	auto* sizer = new wxBoxSizer(wxHORIZONTAL);
 
-	_fileSection = new FileSection(this);
+	_fileSection = new FilePanel(this);
 
 	sizer->Add(_fileSection);
 

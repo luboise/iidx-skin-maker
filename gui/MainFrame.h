@@ -1,6 +1,6 @@
 #include <wx/treectrl.h>
 
-class FileSection;
+class FilePanel;
 
 class MainFrame : public wxFrame {
    public:
@@ -12,7 +12,7 @@ class MainFrame : public wxFrame {
 	void OnExit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 
-	FileSection* _fileSection = nullptr;
+	FilePanel* _fileSection = nullptr;
 };
 
 enum { ID_Hello = 1, ID_NewContentsFolder = 2 };

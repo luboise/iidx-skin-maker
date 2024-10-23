@@ -9,4 +9,6 @@
 #include <fstream>
 
 namespace fs = std::filesystem;
+
 using std::ifstream;
+using std::vector;
