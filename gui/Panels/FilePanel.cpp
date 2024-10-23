@@ -1,5 +1,7 @@
 #include "FilePanel.h"
 
+#include <wx/msgdlg.h>
+
 #include "audio/AudioHandler.h"
 #include "audio/SD9File.h"
 #include "mod_manager/ModManager.h"
@@ -27,6 +29,9 @@ objectList->InsertItem(2, "Object 3");
 	*/
 
 	this->SetSizer(sizer);
+
+	Bind(wxEVT_TREE_ITEM_ACTIVATED, &FilePanel::onClickContentsFile, this,
+		 wxID_ANY);
 }
 
 void FilePanel::onButtonClick(wxCommandEvent& event) {
@@ -72,6 +77,9 @@ void FilePanel::onClickContentsFile(wxTreeEvent& event) {
 			} catch (std::exception e) {
 				wxMessageBox("An unhandled exception has occurred.");
 			}
+		} else {
+			wxMessageBox(std::string("File ") + p.string() +
+						 std::string(" does not exist"));
 		}
 
 		// ((ContentsTreeItemData*)contentsTree->GetItemData(id))->GetFilePath();
@@ -96,7 +104,8 @@ void FilePanel::onOpenNewContentsFolder(wxCommandEvent& event) {
 	// 	pos = path.find("\\");
 	// }
 
-	if (ModManager::getInstance().changeContentsDirectory(path)) {
+	if (!ModManager::getInstance().changeContentsDirectory(path)) {
+		wxMessageBox("Unable to open " + path);
 	};
 }
 
@@ -149,4 +158,7 @@ void FilePanel::resetContentsTree() {
 	_treeWidget->DeleteAllItems();
 }
 
-void FilePanel::onModChanged(const Mod&) { this->rebuildTree(); };
+void FilePanel::onModChanged(const Mod&) {
+	this->rebuildTree();
+	this->_treeWidget->ExpandAll();
+};

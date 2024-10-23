@@ -110,8 +110,8 @@ void AudioHandler::PlaySD9(SD9File& sd9) {
 	playback_set->next_frame = 0;
 	playback_set->total_frames = sd9.getSoundFile()->getFrameCount();
 
-	err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 48000, 16, &SD9Callback,
-							   playback_set);
+	err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 48000, 16,
+							   &SD9Callback, playback_set);
 
 	if (err != paNoError) {
 		throw std::logic_error("Unable to initialise audio stream.");
