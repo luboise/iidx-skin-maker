@@ -1,5 +1,6 @@
 #include "MainMenuBar.h"
 
+#include <wx/app.h>
 #include <wx/event.h>
 #include <wx/utils.h>
 #include <wx/wx.h>
@@ -77,6 +78,10 @@ void MainMenuBar::onMenuOptionClicked(wxCommandEvent& event) {
 		} break;
 		case wxID_SAVE:
 			mmgr.saveMod();
+			break;
+
+		case wxID_EXIT:
+			wxExit();
 			break;
 		case ID_CHANGE_CONTENTS: {
 			auto wx_path =
