@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <stdexcept>
 
 #include "Mod.h"
 #include "files/Directory.h"
@@ -22,9 +23,15 @@ class ModManager {
 	void newMod();
 
 	bool loadFile(std::string filepath);
-	bool saveFile(std::string filepath);
+	bool saveMod();
 
-	Directory& getRootDir() const { return *_rootDir; };
+	Directory& getRootDir() const {
+		if (_rootDir == nullptr) {
+			throw std::runtime_error("Root directory is uninitialised.");
+		}
+
+		return *_rootDir;
+	};
 
 	void addObserver(ModObserver* observer) { _observers.insert(observer); };
 	void removeObserver(ModObserver* observer) { _observers.erase(observer); }
@@ -36,10 +43,10 @@ class ModManager {
 
 	ModManager() = default;
 
-	Mod* _currentMod = nullptr;
+	Mod _currentMod;
 
 	// fs::path _contentsDirPath;
-	Directory* _rootDir;
+	Directory* _rootDir = nullptr;
 
 	std::string _currentContentsDirectory;
 

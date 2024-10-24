@@ -52,7 +52,7 @@ add_subdirectory(extern/portaudio)
 find_package(SndFile REQUIRED)
 
 # Extra Folders
-add_executable(iidx-skin-maker main.cpp)
+add_executable(iidx-skin-maker main.cpp utils.cpp)
 target_precompile_headers(iidx-skin-maker PRIVATE pch.h)
 
 add_subdirectory(gui)

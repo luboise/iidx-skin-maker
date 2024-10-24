@@ -1,25 +1,38 @@
 #include "MainMenuBar.h"
 
 #include <wx/event.h>
+#include <wx/utils.h>
 #include <wx/wx.h>
 
 #include "mod_manager/ModManager.h"
+#include "utils.h"
+
+enum { ID_CHANGE_CONTENTS = wxID_LOWEST - 1 };
 
 MainMenuBar::MainMenuBar(wxWindow* parent) : wxMenuBar() {
-	wxMenu* fileMenu = new wxMenu();
-
-	fileMenu->Append(wxID_OPEN, "Change Contents Folder");
-	fileMenu->Append(wxID_EXIT, "Exit");
-
-	wxMenu* helpMenu = new wxMenu();
-	helpMenu->Append(wxID_ABOUT, "About");
-
-	this->Append(fileMenu, "&File");
-	this->Append(helpMenu, "&Help");
-
 	auto& mod_manager = ModManager::getInstance();
 
-	fileMenu->Bind(
+	wxMenu* fileMenu = new wxMenu();
+
+	fileMenu->Append(wxID_NEW, "New Mod");
+	// fileMenu->Bind(wxID_NEW, [&mod_manager]() { mod_manager.newMod(); });
+
+	fileMenu->Append(wxID_OPEN, "Open Mod");
+	// fileMenu->Bind(wxID_OPEN, &MainMenuBar::onOpenMod);
+
+	fileMenu->Append(wxID_SAVE, "Save Mod");
+	// fileMenu->Bind(wxID_SAVE, [&mod_manager]() { mod_manager.saveMod(); });
+
+	fileMenu->Append(wxID_EXIT, "Exit");
+
+	this->Append(fileMenu, "&File");
+
+	wxMenu* modMenu = new wxMenu();
+	modMenu->Append(ID_CHANGE_CONTENTS, "Change Contents Folder");
+	this->Append(modMenu, "&Mod");
+
+	/*
+	modMenu->Bind(
 		wxEVT_MENU,
 		[parent, &mod_manager](wxCommandEvent& event) {
 			wxDirDialog dlg(parent, _("Locate your contents folder"), "",
@@ -31,8 +44,47 @@ MainMenuBar::MainMenuBar(wxWindow* parent) : wxMenuBar() {
 					dlg.GetPath().ToStdString());
 			}
 		},
+		edit_contents_id);
+		*/
 
-		//	EditorState::Get().loadScene,
+	wxMenu* helpMenu = new wxMenu();
+	helpMenu->Append(wxID_ABOUT, "About");
 
-		wxID_OPEN);
+	this->Append(helpMenu, "&Help");
+
+	Bind(wxEVT_COMMAND_MENU_SELECTED, &MainMenuBar::onMenuOptionClicked, this);
 }
+
+void MainMenuBar::onOpenMod(wxMenuEvent& event) {
+	auto path = Utils::directoryPopup(this, "Locate your contents folder");
+
+	auto& mgr = ModManager::getInstance();
+	mgr.loadFile(path.ToStdString());
+};
+
+void MainMenuBar::onMenuOptionClicked(wxCommandEvent& event) {
+	auto id = event.GetId();
+
+	auto& mmgr = ModManager::getInstance();
+
+	switch (id) {
+		case wxID_NEW:
+			mmgr.newMod();
+			break;
+		case wxID_OPEN: {
+			auto path = Utils::filePopup("Open your mod", "json");
+			mmgr.loadFile(path.ToStdString());
+		} break;
+		case wxID_SAVE:
+			mmgr.saveMod();
+			break;
+		case ID_CHANGE_CONTENTS: {
+			auto wx_path =
+				Utils::directoryPopup(this, "Locate your contents folder");
+			auto path = fs::path(wx_path.ToStdString());
+			mmgr.changeContentsDirectory(path);
+		} break;
+		default:
+			std::cerr << "Unhandled event type: " << event.GetId() << std::endl;
+	}
+};

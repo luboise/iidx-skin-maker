@@ -1,3 +1,4 @@
+#include <wx/event.h>
 #include <wx/wx.h>
 
 class MainMenuBar : public wxMenuBar {
@@ -5,4 +6,6 @@ class MainMenuBar : public wxMenuBar {
 	MainMenuBar(wxWindow* parent);
 
    private:
+	void onOpenMod(wxMenuEvent&);
+	void onMenuOptionClicked(wxCommandEvent& event);
 };

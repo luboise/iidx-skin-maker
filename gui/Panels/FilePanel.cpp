@@ -112,13 +112,17 @@ void FilePanel::onOpenNewContentsFolder(wxCommandEvent& event) {
 void FilePanel::rebuildTree() {
 	this->resetContentsTree();
 
-	auto root_dir = ModManager::getInstance().getRootDir();
+	try {
+		auto root_dir = ModManager::getInstance().getRootDir();
 
-	auto rootID = this->_treeWidget->AddRoot(
-		root_dir.getName(), -1, -1,
-		new ContentsTreeItemData(root_dir.getPath()));
+		auto rootID = this->_treeWidget->AddRoot(
+			root_dir.getName(), -1, -1,
+			new ContentsTreeItemData(root_dir.getPath()));
 
-	rebuildTreeRec(rootID, root_dir);
+		rebuildTreeRec(rootID, root_dir);
+	} catch (std::exception e) {
+		wxMessageBox("Unable to build tree: " + std::string(e.what()));
+	}
 }
 
 void FilePanel::rebuildTreeRec(const wxTreeItemId& currentNodeID,
