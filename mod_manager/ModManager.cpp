@@ -1,6 +1,12 @@
 #include "ModManager.h"
 
+#include <wx/msgdlg.h>
+
+#include <stdexcept>
+
 #include "ModObserver.h"
+#include "gui/Popups/ModSettingsPopup.h"
+#include "utils.h"
 
 ModManager* ModManager::_singleton = nullptr;
 
@@ -28,9 +34,28 @@ void ModManager::newMod() {
 	}
 	*/
 
-	_currentMod = Mod();
+	// fs::path new_root = Utils::directoryPopup("Select your data folder.");
 
-	this->alertObservers();
+	auto new_mod = Mod();
+
+	auto* dialog = new ModSettingsPopup(new_mod);
+	dialog->ShowModal();
+
+	if (!fs::exists(new_mod.root_dir)) {
+		wxMessageBox(
+			"Unable to create new mod from invalid path. Continuing to use the "
+			"old path.");
+		return;
+	}
+
+	changeContentsDirectory(new_mod.root_dir);
+
+	// TODO: Add proper validation before overwriting
+	bool valid = true;
+	if (valid) {
+		_currentMod = std::move(new_mod);
+		this->alertObservers();
+	}
 };
 
 void ModManager::alertObservers() {
@@ -46,3 +71,9 @@ bool ModManager::loadFile(std::string mod) {
 	// TODO: Implement deserialisation of mod
 	return true;
 }
+
+void ModManager::editModSettings() {
+	auto Popup = ModSettingsPopup(_currentMod);
+
+	alertObservers();
+};

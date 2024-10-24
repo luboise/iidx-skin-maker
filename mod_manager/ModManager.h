@@ -12,6 +12,17 @@ class ModManager {
    public:
 	bool changeContentsDirectory(const fs::path&);
 
+	void newMod();
+
+	bool loadFile(std::string filepath);
+	bool saveMod();
+
+	void editModSettings();
+	void addObserver(ModObserver* observer) { _observers.insert(observer); };
+	void removeObserver(ModObserver* observer) { _observers.erase(observer); }
+
+	void alertObservers();
+
 	static ModManager& getInstance() {
 		if (_singleton == nullptr) {
 			_singleton = new ModManager();
@@ -20,11 +31,6 @@ class ModManager {
 		return *_singleton;
 	};
 
-	void newMod();
-
-	bool loadFile(std::string filepath);
-	bool saveMod();
-
 	Directory& getRootDir() const {
 		if (_rootDir == nullptr) {
 			throw std::runtime_error("Root directory is uninitialised.");
@@ -32,11 +38,6 @@ class ModManager {
 
 		return *_rootDir;
 	};
-
-	void addObserver(ModObserver* observer) { _observers.insert(observer); };
-	void removeObserver(ModObserver* observer) { _observers.erase(observer); }
-
-	void alertObservers();
 
    private:
 	static ModManager* _singleton;

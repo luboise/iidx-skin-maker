@@ -1,6 +1,6 @@
 #pragma once
 
 namespace Utils {
-wxString filePopup(wxString text, wxString filetype);
-wxString directoryPopup(wxWindow* parent, wxString text);
+fs::path filePopup(wxString text, wxString filetype);
+fs::path directoryPopup(wxString text);
 }  // namespace Utils

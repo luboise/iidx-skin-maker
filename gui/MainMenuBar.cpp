@@ -57,10 +57,10 @@ MainMenuBar::MainMenuBar(wxWindow* parent) : wxMenuBar() {
 }
 
 void MainMenuBar::onOpenMod(wxMenuEvent& event) {
-	auto path = Utils::directoryPopup(this, "Locate your contents folder");
+	auto path = Utils::directoryPopup("Locate your contents folder");
 
 	auto& mgr = ModManager::getInstance();
-	mgr.loadFile(path.ToStdString());
+	mgr.loadFile(path);
 };
 
 void MainMenuBar::onMenuOptionClicked(wxCommandEvent& event) {
@@ -74,7 +74,7 @@ void MainMenuBar::onMenuOptionClicked(wxCommandEvent& event) {
 			break;
 		case wxID_OPEN: {
 			auto path = Utils::filePopup("Open your mod", "json");
-			mmgr.loadFile(path.ToStdString());
+			mmgr.loadFile(path);
 		} break;
 		case wxID_SAVE:
 			mmgr.saveMod();
@@ -84,9 +84,7 @@ void MainMenuBar::onMenuOptionClicked(wxCommandEvent& event) {
 			wxExit();
 			break;
 		case ID_CHANGE_CONTENTS: {
-			auto wx_path =
-				Utils::directoryPopup(this, "Locate your contents folder");
-			auto path = fs::path(wx_path.ToStdString());
+			auto path = Utils::directoryPopup("Locate your contents folder");
 			mmgr.changeContentsDirectory(path);
 		} break;
 		default:

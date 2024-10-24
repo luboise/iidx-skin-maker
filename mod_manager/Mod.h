@@ -19,8 +19,10 @@ class Override {
 struct Mod {
 	std::string name = "My Mod";
 
-	uint32_t version_major = 1;
-	uint32_t version_minor = 0;
+	int32_t game_version = 0;
+
+	int32_t version_major = 1;
+	int32_t version_minor = 0;
 
 	fs::path root_dir = "";
 
