@@ -2,11 +2,12 @@
 
 #include <sndfile.h>
 
+#include <cmath>
 #include <complex>
 #include <string>
 #include <vector>
 
-typedef double SampleType;
+typedef float SampleType;
 typedef std::vector<SampleType> SampleList;
 
 typedef std::complex<SampleType> FFT_T;
@@ -49,6 +50,8 @@ class SoundFile {
 
 	void changeVolume(const double newVolume);
 	void normalise();
+
+	const SF_INFO& getSoundInfo() const { return _sndinfo; }
 
    private:
 	std::vector<SampleList> _channels;

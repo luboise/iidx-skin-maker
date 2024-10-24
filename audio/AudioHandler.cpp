@@ -1,5 +1,7 @@
 #include "AudioHandler.h"
 
+#include <portaudio.h>
+
 #include <fstream>
 #include <stdexcept>
 
@@ -58,7 +60,7 @@ void AudioHandler::PlayPCM(PCMBufferManager& bm) {
 
 	PaError err;
 
-	err = Pa_OpenDefaultStream(&stream, 0, 2, paInt16, 44100, 512,
+	err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 44100, 512,
 							   &AudioHandler::audioCallback, &bm);
 
 	if (err != paNoError) {
@@ -74,11 +76,11 @@ void AudioHandler::PlayPCM(PCMBufferManager& bm) {
 int SD9Callback(const void* input, void* out_buffer, unsigned long frame_count,
 				const PaStreamCallbackTimeInfo* timeInfo,
 				PaStreamCallbackFlags statusFlags, void* userData) {
-	auto playback_set = (PlaybackSet*)userData;
+	auto playback_set = static_cast<PlaybackSet*>(userData);
 	auto* sound_file = playback_set->sd9->getSoundFile();
 
 	// Read the output buffer
-	float* out = (float*)out_buffer;
+	float* out = static_cast<float*>(out_buffer);
 
 	for (unsigned i = 0; i < frame_count; i++) {
 		size_t frame_index = playback_set->next_frame + i;
@@ -89,10 +91,8 @@ int SD9Callback(const void* input, void* out_buffer, unsigned long frame_count,
 		const auto& frame = sound_file->getFrame(frame_index);
 
 		for (const auto& sample : frame) {
-			std::cout << sample << ",";
-			*out++ = sample;
+			*(out++) = sample;
 		}
-		std::cout << std::endl;
 	}
 
 	playback_set->next_frame += frame_count;
@@ -104,14 +104,15 @@ void AudioHandler::PlaySD9(SD9File& sd9) {
 
 	PaError err;
 
-	auto playback_set = new PlaybackSet{};
+	auto* playback_set = new PlaybackSet{};
 
 	playback_set->sd9 = &sd9;
 	playback_set->next_frame = 0;
 	playback_set->total_frames = sd9.getSoundFile()->getFrameCount();
 
-	err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 48000, 16,
-							   &SD9Callback, playback_set);
+	err = Pa_OpenDefaultStream(
+		&stream, 0, 2, paFloat32, sd9.getSoundFile()->getSoundInfo().samplerate,
+		paFramesPerBufferUnspecified, &SD9Callback, playback_set);
 
 	if (err != paNoError) {
 		throw std::logic_error("Unable to initialise audio stream.");

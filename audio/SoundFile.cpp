@@ -1,6 +1,7 @@
 #include <sndfile.h>
 
 #include <iostream>
+#include <limits>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -35,7 +36,7 @@ sf_count_t read_callback(void* ptr, sf_count_t count, void* user_data) {
 sf_count_t tell_callback(void* user_data) {
 	auto& stream = *((istream*)user_data);
 
-	return stream.gcount();
+	return stream.tellg();
 }
 
 // Seek callback for libsndfile
@@ -122,9 +123,10 @@ SoundFile::SoundFile(std::istream& stream) {
 
 void SoundFile::initialiseData(SNDFILE& snd, SF_INFO& info) {
 	const uint32_t sample_count = info.frames * info.channels;
-	SampleList samples(sample_count);
 
-	auto read_count = sf_readf_double(&snd, samples.data(), info.frames);
+	std::vector<SampleType> raw_samples(sample_count);
+
+	auto read_count = sf_readf_float(&snd, raw_samples.data(), info.frames);
 	if (read_count != info.frames) {
 		std::cerr << "Read failed."
 				  << ", frames read: " << read_count << "/" << info.frames
@@ -133,9 +135,15 @@ void SoundFile::initialiseData(SNDFILE& snd, SF_INFO& info) {
 	}
 
 	std::vector<SampleList> channels(info.channels);
+	for (SampleList& channel : channels) {
+		channels.reserve(info.frames);
+	}
 
-	for (size_t i = 0; i < samples.size(); i++) {
-		channels[i % info.channels].push_back(samples[i]);
+	for (size_t sample = 0; sample < raw_samples.size();
+		 sample += info.channels) {
+		for (size_t channel = 0; channel < info.channels; channel++) {
+			channels[channel].push_back(raw_samples[sample + channel]);
+		}
 	}
 
 	this->_sndinfo = info;
@@ -221,7 +229,7 @@ void SoundFile::exportToFile(const std::string filename) {
 	SF_INFO info = _sndinfo;
 	SNDFILE* snd = sf_open(filename.c_str(), SFM_WRITE, &info);
 
-	sf_write_double(snd, outSamples.data(), outSamples.size());
+	sf_write_float(snd, outSamples.data(), outSamples.size());
 	sf_close(snd);
 }
 
