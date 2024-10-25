@@ -51,17 +51,17 @@ ModSettingsPopup::ModSettingsPopup(Mod& mod)
 
     // All other sizers
 
-    auto name_sizer = new TextCallbackBox(this, "Mod Name", mod.name);
+    auto* name_sizer = new TextCallbackBox(this, "Mod Name", mod.name);
 
-    auto game_version =
+    auto* game_version =
         new NumberCallbackBox(this, "Game Version", mod.game_version);
 
-    auto version_major =
+    auto* version_major =
         new NumberCallbackBox(this, "Version Major", mod.version_major);
-    auto version_minor =
+    auto* version_minor =
         new NumberCallbackBox(this, "Version Minor", mod.version_minor);
 
-    auto create_button = new wxButton(this, wxID_ADD, "Create Mod");
+    auto* create_button = new wxButton(this, wxID_ADD, "Create Mod");
     create_button->Bind(wxEVT_COMMAND_BUTTON_CLICKED,
                         [this](wxCommandEvent&) { this->Close(); });
 

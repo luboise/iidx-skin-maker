@@ -35,9 +35,9 @@ struct SD9Info {
     uint8_t loop_enabled = 0x0;
 
     // ?
-    int fluff4 = 0x0;
+    uint8_t fluff4 = 0x0;
 
-    int unique_index = 0x0;
+    uint16_t unique_index = 0x0;
 };
 
 class SD9File {

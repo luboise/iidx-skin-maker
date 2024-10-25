@@ -1,15 +1,31 @@
 #include <wx/sizer.h>
+#include <wx/spinctrl.h>
 
 using NumberCallback = std::function<void(wxString&)>;
 
-using number_box_value_t = int32_t;
-
+template <typename T>
 class NumberCallbackBox : public wxBoxSizer {
    public:
-	NumberCallbackBox(wxWindow*, std::string label,
-					  number_box_value_t& form_value);
+    NumberCallbackBox(wxWindow* parent, std::string label_text, T& form_value)
+        : _value(form_value), wxBoxSizer(wxHORIZONTAL) {
+        auto* label = new wxStaticText(parent, wxID_ANY, label_text);
+        this->Add(label);
+
+        this->AddStretchSpacer();
+
+        auto* text_ctrl =
+            new wxSpinCtrl(parent, wxID_ANY, std::to_string(form_value));
+        this->Add(text_ctrl);
+
+        text_ctrl->Bind(wxEVT_TEXT, &NumberCallbackBox::onNumberboxChanged,
+                        this);
+    }
 
    private:
-	void onNumberboxChanged(wxCommandEvent& event);
-	int32_t& _value;
+    T& _value;
+
+    void onNumberboxChanged(wxCommandEvent& event) {
+        T val = event.GetInt();
+        _value = val;
+    }
 };

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <wx/treectrl.h>
 #include <wx/wx.h>
 
@@ -6,26 +8,26 @@
 
 class FilePanel : public wxPanel, public ModObserver {
    public:
-	FilePanel(wxWindow* parent);
-	void changeContentsDirectory(const fs::path& newDir);
+    FilePanel(wxWindow* parent);
+    void changeContentsDirectory(const fs::path& newDir);
 
    private:
-	void onButtonClick(wxCommandEvent& event);
+    void onButtonClick(wxCommandEvent& event);
 
-	void onClickContentsFile(wxTreeEvent& event);
+    void onClickContentsFile(wxTreeEvent& event);
 
-	void onOpenNewContentsFolder(wxCommandEvent& event);
-	void resetContentsTree();
+    void onOpenNewContentsFolder(wxCommandEvent& event);
+    void resetContentsTree();
 
-	void rebuildTree();
-	void rebuildTreeRec(const wxTreeItemId& currentNode,
-						const Directory& currentDir);
+    void rebuildTree();
+    void rebuildTreeRec(const wxTreeItemId& currentNode,
+                        const Directory& currentDir);
 
-	void remakeTree();
+    void remakeTree();
 
-	virtual void onModChanged(const Mod&) override;
+    virtual void onModChanged(const Mod&) override;
 
-	wxTreeCtrl* _treeWidget = nullptr;
+    wxTreeCtrl* _treeWidget = nullptr;
 
-	enum { ID_ADD_ENTITY };
+    enum { ID_ADD_ENTITY };
 };
