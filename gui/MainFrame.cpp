@@ -1,24 +1,28 @@
 #include "MainFrame.h"
 
 #include <portaudio.h>
-#include <wx/msgdlg.h>
-#include <wx/mstream.h>
-#include <wx/sound.h>
+#include <wx/splitter.h>
 
 #include "gui/MainMenuBar.h"
 #include "gui/Panels/FilePanel.h"
 
 MainFrame::MainFrame(wxWindow* parent)
 	: wxFrame(NULL, wxID_ANY, "Hello World") {
-	auto* sizer = new wxBoxSizer(wxHORIZONTAL);
+	// auto* sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxSplitterWindow* splitter = new wxSplitterWindow(this, wxID_ANY);
 
-	_fileSection = new FilePanel(this);
+	_fileSection = new FilePanel(splitter);
+	wxButton* button = new wxButton(splitter, wxID_ANY);
 
-	sizer->Add(_fileSection);
+	splitter->SplitVertically(_fileSection, button);
+	splitter->SetMinimumPaneSize(200);
+	splitter->SetSashPosition(400);
 
-	sizer->AddStretchSpacer(1);
+	// sizer->Add(_fileSection);
 
-	this->SetSizer(sizer);
+	// sizer->AddStretchSpacer(1);
+
+	// this->SetSizer(sizer);
 
 	this->CreateStatusBar();
 	this->SetMenuBar(new MainMenuBar(this));

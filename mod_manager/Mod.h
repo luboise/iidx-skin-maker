@@ -6,25 +6,28 @@
  */
 class Override {
    public:
-	// Abstract function that processes the mod
-	virtual void process(std::string out_root) = 0;
+    // Abstract function that processes the mod
+    virtual void process(std::string out_root) = 0;
 
-	virtual ~Override();
+    virtual ~Override();
 
    private:
-	// The path of the file to be overridden
-	std::string _in;
+    // The path of the file to be overridden
+    std::string _in;
 };
 
 struct Mod {
-	std::string name = "My Mod";
+    std::string name = "My Mod";
 
-	int32_t game_version = 0;
+    int32_t game_version = 31;
 
-	int32_t version_major = 1;
-	int32_t version_minor = 0;
+    int32_t version_major = 1;
+    int32_t version_minor = 0;
 
-	fs::path root_dir = "";
+    fs::path root_dir = "";
 
-	std::vector<Override> overrides{};
+    std::vector<Override> overrides{};
+
+    [[nodiscard]] std::string serialise() const;
+    static Mod deserialise(std::string);
 };

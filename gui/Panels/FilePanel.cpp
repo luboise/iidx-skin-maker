@@ -14,7 +14,7 @@ FilePanel::FilePanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
 	this->_treeWidget = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
 									   wxSize(150, 500), wxTR_DEFAULT_STYLE);
 	sizer->Add(add_entity_button);
-	sizer->Add(_treeWidget);
+	sizer->Add(_treeWidget, 0, wxEXPAND | wxALL);
 
 	/*
 // Add a list control for objects in the scene

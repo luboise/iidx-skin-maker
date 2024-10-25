@@ -1,0 +1,17 @@
+CompileFlags:
+  Add: -Wall
+
+Diagnostics:
+  UnusedIncludes: Strict
+  ClangTidy:
+    Add:
+      - bugprone*
+      - concurrency*
+      - cppcoreguidelines*
+      - modernize*
+      - performance*
+      - readability*
+      - hicpp*
+    Remove:
+      - modernize-use-trailing-return-type
+      - readability-identifier-length

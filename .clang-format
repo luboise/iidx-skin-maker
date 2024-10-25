@@ -1,6 +1,6 @@
-BasedOnStyle: Google
-UseTab: Always
+BasedOnStyle: google
 IndentWidth: 4
-TabWidth: 4
-SortIncludes: true
-PointerAlignment: Left
+NamespaceIndentation: All
+IndentPPDirectives: BeforeHash
+
+IncludeBlocks: Preserve

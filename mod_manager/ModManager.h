@@ -10,46 +10,49 @@ class ModObserver;
 
 class ModManager {
    public:
-	bool changeContentsDirectory(const fs::path&);
+    bool changeContentsDirectory(const fs::path&);
 
-	void newMod();
+    void newMod();
 
-	bool loadFile(std::string filepath);
-	bool saveMod();
+    bool loadMod(const fs::path&);
 
-	void editModSettings();
-	void addObserver(ModObserver* observer) { _observers.insert(observer); };
-	void removeObserver(ModObserver* observer) { _observers.erase(observer); }
+    bool saveMod(const Mod&, const fs::path&);
+    bool saveMod() { return saveMod(_currentMod, _modLocation); };
 
-	void alertObservers();
+    void editModSettings();
+    void addObserver(ModObserver* observer) { _observers.insert(observer); };
+    void removeObserver(ModObserver* observer) { _observers.erase(observer); }
 
-	static ModManager& getInstance() {
-		if (_singleton == nullptr) {
-			_singleton = new ModManager();
-		}
+    void alertObservers();
 
-		return *_singleton;
-	};
+    static ModManager& getInstance() {
+        if (_singleton == nullptr) {
+            _singleton = new ModManager();
+        }
 
-	Directory& getRootDir() const {
-		if (_rootDir == nullptr) {
-			throw std::runtime_error("Root directory is uninitialised.");
-		}
+        return *_singleton;
+    };
 
-		return *_rootDir;
-	};
+    [[nodiscard]] Directory& getRootDir() const {
+        if (_rootDir == nullptr) {
+            throw std::runtime_error("Root directory is uninitialised.");
+        }
+
+        return *_rootDir;
+    };
 
    private:
-	static ModManager* _singleton;
+    static ModManager* _singleton;
 
-	ModManager() = default;
+    ModManager() = default;
 
-	Mod _currentMod;
+    fs::path _modLocation = "";
+    Mod _currentMod{};
 
-	// fs::path _contentsDirPath;
-	Directory* _rootDir = nullptr;
+    // fs::path _contentsDirPath;
+    Directory* _rootDir = nullptr;
 
-	std::string _currentContentsDirectory;
+    std::string _currentContentsDirectory;
 
-	std::set<ModObserver*> _observers;
+    std::set<ModObserver*> _observers;
 };
