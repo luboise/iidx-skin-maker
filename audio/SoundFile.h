@@ -7,71 +7,72 @@
 #include <string>
 #include <vector>
 
-typedef float SampleType;
-typedef std::vector<SampleType> SampleList;
+using SampleType = float;
+using SampleList = std::vector<SampleType>;
 
-typedef std::complex<SampleType> FFT_T;
-typedef std::vector<FFT_T> FFTBinList;
+using FFT_T = std::complex<SampleType>;
+using FFTBinList = std::vector<FFT_T>;
 
 struct StreamDetails {
-	std::istream* stream;
-	long start = 0;
+    std::istream* stream;
+    long start = 0;
 };
 
 class SoundFile {
    public:
-	SoundFile(const std::string& filepath);
+    SoundFile(const std::string& filepath);
 
-	SoundFile(char* data, int size);
+    SoundFile(char* data, uint32_t size);
 
-	SoundFile(std::istream&);
-	~SoundFile();
+    SoundFile(std::istream&);
+    ~SoundFile();
 
-	void exportToFile(const std::string filename);
+    void exportToFile(const std::string filename);
 
-	bool isValid() const;
-	double getSoundLength() const;
+    [[nodiscard]] bool isValid() const;
+    [[nodiscard]] double getSoundLength() const;
 
-	SampleList getStretched(double stretchFactor) const;
-	SampleList getStretched(double stretchFactor, int32_t startFrame,
-							int32_t endFrame) const;
-	std::vector<SampleType> getFrame(const int32_t frameIndex) const;
-	// SampleList getSamples() const;
-	SampleList getChannel(uint8_t channel) const;
+    [[nodiscard]] SampleList getStretched(double stretchFactor) const;
+    [[nodiscard]] SampleList getStretched(double stretchFactor,
+                                          int32_t startFrame,
+                                          int32_t endFrame) const;
+    std::vector<SampleType> getFrame(int32_t frameIndex) const;
+    // SampleList getSamples() const;
+    [[nodiscard]] SampleList getChannel(uint8_t channel) const;
 
-	size_t getChannelCount() const;
-	size_t getSampleCount() const;
+    [[nodiscard]] size_t getChannelCount() const;
+    [[nodiscard]] size_t getSampleCount() const;
 
-	size_t getFrameCount() const { return _channels[0].size(); };
+    [[nodiscard]] size_t getFrameCount() const { return _channels[0].size(); };
 
-	void setSamples(const SampleList frames);
-	void setChannel(const size_t channel, const size_t offset,
-					const SampleList samples);
+    void setSamples(const SampleList frames);
+    void setChannel(const size_t channel, const size_t offset,
+                    const SampleList samples);
 
-	void changeVolume(const double newVolume);
-	void normalise();
+    void changeVolume(const double newVolume);
+    void normalise();
 
-	const SF_INFO& getSoundInfo() const { return _sndinfo; }
+    [[nodiscard]] const SF_INFO& getSoundInfo() const { return _sndinfo; }
 
    private:
-	std::vector<SampleList> _channels;
-	SF_INFO _sndinfo;
+    std::vector<SampleList> _channels;
+    SF_INFO _sndinfo;
 
-	void initialiseData(SNDFILE&, SF_INFO&);
+    void initialiseData(SNDFILE&, SF_INFO&);
 
-	// void swingFrames(const int32_t leftFrame, const int32_t rightFrame);
-	// void swingFrames(const int32_t leftFrame, const int32_t rightFrame,
-	// bool removeSwing);
+    // void swingFrames(const int32_t leftFrame, const int32_t rightFrame);
+    // void swingFrames(const int32_t leftFrame, const int32_t rightFrame,
+    // bool removeSwing);
 
-	std::vector<SampleList> getWindows(const SampleList& samples,
-									   const size_t windowSize,
-									   const double hopSize) const;
+    [[nodiscard]] std::vector<SampleList> getWindows(
+        const SampleList& samples, const size_t windowSize,
+        const double hopSize) const;
 
-	std::vector<FFTBinList> getWindowBins(
-		std::vector<SampleList> windows) const;
+    [[nodiscard]] std::vector<FFTBinList> getWindowBins(
+        std::vector<SampleList> windows) const;
 
-	static double getNewBeatPosition(double beat, double ratio,
-									 bool removingSwing);
+    static double getNewBeatPosition(double beat, double ratio,
+                                     bool removingSwing);
 
-	void resizeChannels();
+    void resizeChannels();
 };

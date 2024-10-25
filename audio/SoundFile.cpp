@@ -1,5 +1,6 @@
 #include <sndfile.h>
 
+#include <cstdint>
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -24,150 +25,150 @@ namespace fs = std::filesystem;
 using std::istream;
 
 sf_count_t read_callback(void* ptr, sf_count_t count, void* user_data) {
-	// StreamDetails& details = *(StreamDetails*)user_data;
-	auto& stream = *((istream*)user_data);
+    // StreamDetails& details = *(StreamDetails*)user_data;
+    auto& stream = *((istream*)user_data);
 
-	stream.read((char*)ptr, count);
+    stream.read((char*)ptr, count);
 
-	return stream.gcount();
+    return stream.gcount();
 }
 
 sf_count_t tell_callback(void* user_data) {
-	auto& stream = *((istream*)user_data);
+    auto& stream = *((istream*)user_data);
 
-	return stream.tellg();
+    return stream.tellg();
 }
 
 // Seek callback for libsndfile
 sf_count_t seek_callback(sf_count_t offset, int whence, void* user_data) {
-	auto& stream = *((istream*)user_data);
+    auto& stream = *((istream*)user_data);
 
-	if (whence == SEEK_SET) {
-		stream.seekg(offset, std::ios::beg);
-	} else if (whence == SEEK_CUR) {
-		stream.seekg(offset);
-	} else if (whence == SEEK_END) {
-		stream.seekg(0, std::ios::end);
-	}
+    if (whence == SEEK_SET) {
+        stream.seekg(offset, std::ios::beg);
+    } else if (whence == SEEK_CUR) {
+        stream.seekg(offset);
+    } else if (whence == SEEK_END) {
+        stream.seekg(0, std::ios::end);
+    }
 
-	return stream.tellg();
+    return stream.tellg();
 }
 
 sf_count_t file_length_callback(void* user_data) {
-	auto& stream = *((istream*)user_data);
+    auto& stream = *((istream*)user_data);
 
-	// Backup cursor
-	const auto curr = stream.tellg();
+    // Backup cursor
+    const auto curr = stream.tellg();
 
-	// Go to the end and then get the real filesize, then restore
-	stream.seekg(0, std::ios::end);
-	const sf_count_t length = stream.tellg();
-	stream.seekg(curr, std::ios::beg);
+    // Go to the end and then get the real filesize, then restore
+    stream.seekg(0, std::ios::end);
+    const sf_count_t length = stream.tellg();
+    stream.seekg(curr, std::ios::beg);
 
-	return length;
+    return length;
 }
 
 // Define the format of the virtual file
 
-SoundFile::SoundFile(char* data, int size) {
-	std::string str(data, size);
-	std::istringstream iss(str);
+SoundFile::SoundFile(char* data, uint32_t size) {
+    std::string str(data, size);
+    std::istringstream iss(str);
 
-	SF_INFO info;
+    SF_INFO info;
 
-	SF_VIRTUAL_IO virtual_io = {file_length_callback, seek_callback,
-								read_callback, NULL, tell_callback};
+    SF_VIRTUAL_IO virtual_io = {file_length_callback, seek_callback,
+                                read_callback, NULL, tell_callback};
 
-	SNDFILE* snd = sf_open_virtual(&virtual_io, SFM_READ, &info, &iss);
+    SNDFILE* snd = sf_open_virtual(&virtual_io, SFM_READ, &info, &iss);
 
-	if (!snd) {
-		const char* error_text = sf_strerror(nullptr);
+    if (!snd) {
+        const char* error_text = sf_strerror(nullptr);
 
-		std::stringstream ss;
-		ss << "Error opening sound file: " << sf_strerror(nullptr);
+        std::stringstream ss;
+        ss << "Error opening sound file: " << sf_strerror(nullptr);
 
-		throw std::runtime_error(ss.str());
-	}
+        throw std::runtime_error(ss.str());
+    }
 
-	this->initialiseData(*snd, info);
-	sf_close(snd);
+    this->initialiseData(*snd, info);
+    sf_close(snd);
 }
 // SoundFile(std::istringstream&&){};
 
 SoundFile::SoundFile(std::istream& stream) {
-	StreamDetails details{&stream, stream.tellg()};
+    StreamDetails details{&stream, stream.tellg()};
 
-	SF_INFO info;
+    SF_INFO info;
 
-	SF_VIRTUAL_IO virtual_io = {
-		file_length_callback, seek_callback, read_callback,
-		NULL,  // Write callback not needed
-		NULL   // Tell callback not needed
-	};
+    SF_VIRTUAL_IO virtual_io = {
+        file_length_callback, seek_callback, read_callback,
+        NULL,  // Write callback not needed
+        NULL   // Tell callback not needed
+    };
 
-	SNDFILE* snd = sf_open_virtual(&virtual_io, SFM_READ, &info, &stream);
+    SNDFILE* snd = sf_open_virtual(&virtual_io, SFM_READ, &info, &stream);
 
-	if (!snd) {
-		const char* error_text = sf_strerror(nullptr);
+    if (!snd) {
+        const char* error_text = sf_strerror(nullptr);
 
-		std::stringstream ss;
-		ss << "Error opening sound file: " << sf_strerror(nullptr);
+        std::stringstream ss;
+        ss << "Error opening sound file: " << sf_strerror(nullptr);
 
-		throw std::runtime_error(ss.str());
-	}
+        throw std::runtime_error(ss.str());
+    }
 
-	this->initialiseData(*snd, info);
-	sf_close(snd);
+    this->initialiseData(*snd, info);
+    sf_close(snd);
 }
 
 void SoundFile::initialiseData(SNDFILE& snd, SF_INFO& info) {
-	const uint32_t sample_count = info.frames * info.channels;
+    const uint32_t sample_count = info.frames * info.channels;
 
-	std::vector<SampleType> raw_samples(sample_count);
+    std::vector<SampleType> raw_samples(sample_count);
 
-	auto read_count = sf_readf_float(&snd, raw_samples.data(), info.frames);
-	if (read_count != info.frames) {
-		std::cerr << "Read failed."
-				  << ", frames read: " << read_count << "/" << info.frames
-				  << std::endl;
-		return;
-	}
+    auto read_count = sf_readf_float(&snd, raw_samples.data(), info.frames);
+    if (read_count != info.frames) {
+        std::cerr << "Read failed."
+                  << ", frames read: " << read_count << "/" << info.frames
+                  << std::endl;
+        return;
+    }
 
-	std::vector<SampleList> channels(info.channels);
-	for (SampleList& channel : channels) {
-		channels.reserve(info.frames);
-	}
+    std::vector<SampleList> channels(info.channels);
+    for (SampleList& channel : channels) {
+        channels.reserve(info.frames);
+    }
 
-	for (size_t sample = 0; sample < raw_samples.size();
-		 sample += info.channels) {
-		for (size_t channel = 0; channel < info.channels; channel++) {
-			channels[channel].push_back(raw_samples[sample + channel]);
-		}
-	}
+    for (size_t sample = 0; sample < raw_samples.size();
+         sample += info.channels) {
+        for (size_t channel = 0; channel < info.channels; channel++) {
+            channels[channel].push_back(raw_samples[sample + channel]);
+        }
+    }
 
-	this->_sndinfo = info;
-	this->_channels = channels;
+    this->_sndinfo = info;
+    this->_channels = channels;
 };
 
 SoundFile::SoundFile(const std::string& filepath) {
-	SF_INFO info;
+    SF_INFO info;
 
-	if (!fs::exists(filepath) || fs::is_directory(filepath)) {
-		std::cerr << "Unable to locate file: \"" << filepath
-				  << "\" or it is a directory and not a file." << std::endl;
-		return;
-	}
+    if (!fs::exists(filepath) || fs::is_directory(filepath)) {
+        std::cerr << "Unable to locate file: \"" << filepath
+                  << "\" or it is a directory and not a file." << std::endl;
+        return;
+    }
 
-	SNDFILE* snd = sf_open(filepath.c_str(), SFM_READ, &info);
+    SNDFILE* snd = sf_open(filepath.c_str(), SFM_READ, &info);
 
-	if (!snd) {
-		std::cerr << "Error opening sound file \"" << filepath << "\""
-				  << std::endl;
-		return;
-	}
+    if (!snd) {
+        std::cerr << "Error opening sound file \"" << filepath << "\""
+                  << std::endl;
+        return;
+    }
 
-	this->initialiseData(*snd, info);
-	sf_close(snd);
+    this->initialiseData(*snd, info);
+    sf_close(snd);
 }
 
 SoundFile::~SoundFile() {}
@@ -206,209 +207,209 @@ bool SoundFile::isValid() const { return this->_channels.size() > 0; }
 // }
 
 void SoundFile::exportToFile(const std::string filename) {
-	if (!this->isValid()) {
-		std::cerr << "Attempting to write invalid file. Skipping..."
-				  << std::endl;
-		return;
-	}
+    if (!this->isValid()) {
+        std::cerr << "Attempting to write invalid file. Skipping..."
+                  << std::endl;
+        return;
+    }
 
-	this->resizeChannels();
+    this->resizeChannels();
 
-	SampleList outSamples(this->getSampleCount());
+    SampleList outSamples(this->getSampleCount());
 
-	size_t channel_count = _channels.size();
+    size_t channel_count = _channels.size();
 
-	for (size_t i = 0; i < this->_channels[0].size(); i++) {
-		for (size_t j = 0; j < channel_count; j++) {
-			outSamples[i * channel_count + j] = _channels[j][i];
-		}
-	}
+    for (size_t i = 0; i < this->_channels[0].size(); i++) {
+        for (size_t j = 0; j < channel_count; j++) {
+            outSamples[i * channel_count + j] = _channels[j][i];
+        }
+    }
 
-	// Remove const binding from const function
-	SF_INFO info = _sndinfo;
-	SNDFILE* snd = sf_open(filename.c_str(), SFM_WRITE, &info);
+    // Remove const binding from const function
+    SF_INFO info = _sndinfo;
+    SNDFILE* snd = sf_open(filename.c_str(), SFM_WRITE, &info);
 
-	sf_write_float(snd, outSamples.data(), outSamples.size());
-	sf_close(snd);
+    sf_write_float(snd, outSamples.data(), outSamples.size());
+    sf_close(snd);
 }
 
 double SoundFile::getSoundLength() const {
-	return (double)_sndinfo.frames / _sndinfo.samplerate;
+    return (double)_sndinfo.frames / _sndinfo.samplerate;
 }
 
 SampleList SoundFile::getStretched(double stretchFactor) const {
-	return getStretched(stretchFactor, 0, _sndinfo.frames - 1);
+    return getStretched(stretchFactor, 0, _sndinfo.frames - 1);
 }
 
 SampleList SoundFile::getStretched(double stretchFactor, int32_t startFrame,
-								   int32_t endFrame) const {
-	const int32_t startSample = startFrame * _sndinfo.channels;
+                                   int32_t endFrame) const {
+    const int32_t startSample = startFrame * _sndinfo.channels;
 
-	const int32_t frame_count = endFrame - startFrame;
-	const int32_t sample_count = frame_count * _sndinfo.channels;
+    const int32_t frame_count = endFrame - startFrame;
+    const int32_t sample_count = frame_count * _sndinfo.channels;
 
-	int32_t out_frames = floor(frame_count / stretchFactor);
+    int32_t out_frames = floor(frame_count / stretchFactor);
 
-	SampleList stretched(out_frames * _sndinfo.channels);
+    SampleList stretched(out_frames * _sndinfo.channels);
 
-	uint32_t current_sample = 0;
-	for (int frame = 0; frame < out_frames; frame++) {
-		// pos is [0.0, 1.0]
-		double pos = (double)frame / (frame_count - 1);
+    uint32_t current_sample = 0;
+    for (int frame = 0; frame < out_frames; frame++) {
+        // pos is [0.0, 1.0]
+        double pos = (double)frame / (frame_count - 1);
 
-		// Get the frame offset that we want the real value from
-		double offset = pos * frame_count * stretchFactor;
+        // Get the frame offset that we want the real value from
+        double offset = pos * frame_count * stretchFactor;
 
-		double weight_r = fmod(offset, 1.0);
-		double weight_l = 1 - weight_r;
+        double weight_r = fmod(offset, 1.0);
+        double weight_l = 1 - weight_r;
 
-		int32_t wanted_frame = (startFrame + (uint32_t)offset);
-		auto left_frame = this->getFrame(wanted_frame);
-		auto right_frame = this->getFrame(wanted_frame + 1);
+        int32_t wanted_frame = (startFrame + (uint32_t)offset);
+        auto left_frame = this->getFrame(wanted_frame);
+        auto right_frame = this->getFrame(wanted_frame + 1);
 
-		for (size_t i = 0; i < _sndinfo.channels; i++) {
-			double interpolated_val =
-				weight_l * left_frame[i] + weight_r * right_frame[i];
-			stretched[current_sample++] = interpolated_val;
-		}
-	}
+        for (size_t i = 0; i < _sndinfo.channels; i++) {
+            double interpolated_val =
+                weight_l * left_frame[i] + weight_r * right_frame[i];
+            stretched[current_sample++] = interpolated_val;
+        }
+    }
 
-	return stretched;
+    return stretched;
 }
 
 SampleList SoundFile::getFrame(const int32_t frameIndex) const {
-	SampleList frame(_sndinfo.channels);
+    SampleList frame(_sndinfo.channels);
 
-	for (size_t i = 0; i < _sndinfo.channels; i++) {
-		frame[i] = _channels[i][frameIndex];
-	}
+    for (size_t i = 0; i < _sndinfo.channels; i++) {
+        frame[i] = _channels[i][frameIndex];
+    }
 
-	return frame;
+    return frame;
 }
 
 void SoundFile::setChannel(const size_t channel, const size_t offset,
-						   const SampleList samples) {
-	_channels[channel] = samples;
+                           const SampleList samples) {
+    _channels[channel] = samples;
 
-	/*if (samples.size() <= _channels[channel].size())
-	size_t index;
-	for (size_t i = 0; i < samples.size(); i++) {
-		index = (offset + i) * _sndinfo.channels + channel;
-		_channels[channel] = samples[i];
-	}*/
+    /*if (samples.size() <= _channels[channel].size())
+    size_t index;
+    for (size_t i = 0; i < samples.size(); i++) {
+            index = (offset + i) * _sndinfo.channels + channel;
+            _channels[channel] = samples[i];
+    }*/
 }
 
 // SampleList SoundFile::getSamples() const { return this->_samples; }
 
 SampleList SoundFile::getChannel(uint8_t channel) const {
-	if (channel >= _channels.size()) {
-		std::cerr << "Attempted to get channel at invalid index " << channel
-				  << "." << std::endl;
-		return SampleList();
-	}
+    if (channel >= _channels.size()) {
+        std::cerr << "Attempted to get channel at invalid index " << channel
+                  << "." << std::endl;
+        return SampleList();
+    }
 
-	return _channels[channel];
+    return _channels[channel];
 }
 
 size_t SoundFile::getChannelCount() const { return _sndinfo.channels; }
 size_t SoundFile::getSampleCount() const {
-	if (_channels.size() == 0) return 0;
-	return _channels.size() * _channels[0].size();
-	;
+    if (_channels.size() == 0) return 0;
+    return _channels.size() * _channels[0].size();
+    ;
 }
 
 double lanczosWindow(double x, double a) {
-	if (std::abs(x) < 1e-8) return 1.0;
-	if (std::abs(x) >= a) return 0.0;
-	return std::sin(M_PI * x) * std::sin(M_PI * x / a) / (M_PI * M_PI * x * x);
+    if (std::abs(x) < 1e-8) return 1.0;
+    if (std::abs(x) >= a) return 0.0;
+    return std::sin(M_PI * x) * std::sin(M_PI * x / a) / (M_PI * M_PI * x * x);
 }
 
 std::vector<SampleList> SoundFile::getWindows(const SampleList& samples,
-											  const size_t windowSize,
-											  const double hopSize) const {
-	std::vector<SampleList> windows;
-	uint32_t l_index;
-	uint32_t r_index;
+                                              const size_t windowSize,
+                                              const double hopSize) const {
+    std::vector<SampleList> windows;
+    uint32_t l_index;
+    uint32_t r_index;
 
-	size_t window_index = 0;
+    size_t window_index = 0;
 
-	const size_t size = samples.size();
-	while (true) {
-		l_index = window_index++ * hopSize;
-		r_index = l_index + windowSize;
+    const size_t size = samples.size();
+    while (true) {
+        l_index = window_index++ * hopSize;
+        r_index = l_index + windowSize;
 
-		if (r_index >= size) {
-			SampleList window(samples.begin() + l_index, samples.end());
-			windows.push_back(window);
-			break;
-		} else {
-			SampleList window(samples.begin() + l_index,
-							  samples.begin() + r_index);
-			windows.push_back(window);
-		}
-	}
+        if (r_index >= size) {
+            SampleList window(samples.begin() + l_index, samples.end());
+            windows.push_back(window);
+            break;
+        } else {
+            SampleList window(samples.begin() + l_index,
+                              samples.begin() + r_index);
+            windows.push_back(window);
+        }
+    }
 
-	return windows;
+    return windows;
 }
 
 double SoundFile::getNewBeatPosition(double beat, double ratio,
-									 bool removingSwing) {
-	double threshold = (removingSwing) ? ratio : 0.5;
+                                     bool removingSwing) {
+    double threshold = (removingSwing) ? ratio : 0.5;
 
-	double subbeat = fmod(beat, 1.0);
+    double subbeat = fmod(beat, 1.0);
 
-	if (subbeat < threshold) {
-		subbeat *= ratio / threshold;
-	} else {
-		subbeat -= threshold;
-		subbeat *= (1 - ratio) / threshold;
-		subbeat += threshold;
-	}
+    if (subbeat < threshold) {
+        subbeat *= ratio / threshold;
+    } else {
+        subbeat -= threshold;
+        subbeat *= (1 - ratio) / threshold;
+        subbeat += threshold;
+    }
 
-	return floor(beat) + subbeat;
+    return floor(beat) + subbeat;
 }
 
 void SoundFile::resizeChannels() {
-	uint32_t maxSize = 0;
-	for (const auto& channel : _channels) {
-		if (channel.size() > maxSize) maxSize = channel.size();
-	}
+    uint32_t maxSize = 0;
+    for (const auto& channel : _channels) {
+        if (channel.size() > maxSize) maxSize = channel.size();
+    }
 
-	for (auto& channel : _channels) {
-		if (channel.size() < maxSize) {
-			channel.resize(maxSize);
-		}
-	}
+    for (auto& channel : _channels) {
+        if (channel.size() < maxSize) {
+            channel.resize(maxSize);
+        }
+    }
 
-	_sndinfo.frames = (_channels.size() > 0) ? _channels[0].size() : 0;
+    _sndinfo.frames = (_channels.size() > 0) ? _channels[0].size() : 0;
 }
 
 void SoundFile::changeVolume(const double newVolume) {
-	for (auto& channel : _channels) {
-		for (auto& sample : channel) {
-			sample *= newVolume;
-		}
-	}
+    for (auto& channel : _channels) {
+        for (auto& sample : channel) {
+            sample *= newVolume;
+        }
+    }
 }
 
 void SoundFile::normalise() {
-	if (_channels.size() == 0 || _channels[0].size() == 0) {
-		return;
-	}
-	double maxSample = abs(_channels[0][0]);
-	for (auto& channel : _channels) {
-		for (const auto& sample : channel) {
-			auto newVal = abs(sample);
-			if (newVal > maxSample) maxSample = newVal;
-		}
-	}
+    if (_channels.size() == 0 || _channels[0].size() == 0) {
+        return;
+    }
+    double maxSample = abs(_channels[0][0]);
+    for (auto& channel : _channels) {
+        for (const auto& sample : channel) {
+            auto newVal = abs(sample);
+            if (newVal > maxSample) maxSample = newVal;
+        }
+    }
 
-	double scalar = 1 / maxSample;
-	for (auto& channel : _channels) {
-		for (auto& sample : channel) {
-			sample *= scalar;
-		}
-	}
+    double scalar = 1 / maxSample;
+    for (auto& channel : _channels) {
+        for (auto& sample : channel) {
+            sample *= scalar;
+        }
+    }
 }
 
 // void SoundFile::swingFrames(const int32_t leftFrame, const int32_t
