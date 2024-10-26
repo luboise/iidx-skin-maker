@@ -60,9 +60,11 @@ Mod Mod::deserialise(const std::string& serialised_data) {
                 Utils::String::Split(line, OVERRIDE_SEP_CHAR);
 
             if (tokens.size() != 4) {
-                std::cerr << "Line does not have 4 tokens: \n"
-                          << line << "\n\nSkipping this override." << std::endl;
-                continue;
+                std::stringstream ss;
+                ss << "Line does not have 4 tokens: \n"
+                   << line << "\n\nSkipping this override." << std::endl;
+
+                throw std::invalid_argument(ss.str());
             }
 
             if (tokens[0] == SD9Override::getType()) {
