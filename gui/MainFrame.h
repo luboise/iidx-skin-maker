@@ -5,7 +5,9 @@ class EditPanel;
 
 class MainFrame : public wxFrame {
    public:
-    MainFrame(wxWindow* parent = nullptr);
+    explicit MainFrame(wxWindow* parent = nullptr);
+
+    void onPathClicked(wxCommandEvent& event);
 
    private:
     // Event Handlers

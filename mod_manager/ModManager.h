@@ -20,9 +20,15 @@ class ModManager {
     bool saveMod() { return saveMod(_currentMod, _modLocation); };
 
     void editModSettings();
+
+    void selectPath(fs::path& path);
+
+    Override* getOverride(const fs::path& path) {
+        return _currentMod.getOverride(path);
+    }
+
     void addObserver(ModObserver* observer) { _observers.insert(observer); };
     void removeObserver(ModObserver* observer) { _observers.erase(observer); }
-
     void alertObservers();
 
     static ModManager& getInstance() {
@@ -48,6 +54,8 @@ class ModManager {
 
     fs::path _modLocation = "";
     Mod _currentMod{};
+
+    fs::path _selectedPath = "";
 
     // fs::path _contentsDirPath;
     Directory* _rootDir = nullptr;

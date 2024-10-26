@@ -5,6 +5,7 @@
 #include <wx/gtk/msgdlg.h>
 
 #include <cstring>
+#include <string>
 
 fs::path Utils::directoryPopup(const wxString& text) {
     auto path = wxDirSelector(text, "");
@@ -45,4 +46,18 @@ bool Utils::booleanPopup(const wxString& message, const wxString& true_option,
                                       wxYES_NO | wxICON_QUESTION);
 
     return popup->ShowModal() == wxID_YES;
+};
+
+vector<std::string> Utils::String::Split(const std::string& in_string,
+                                         char delimiter) {
+    vector<std::string> values;
+    std::stringstream ss(in_string);
+
+    std::string value;
+
+    while (std::getline(ss, value, delimiter)) {
+        values.push_back(value);
+    }
+
+    return values;
 };

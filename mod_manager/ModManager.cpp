@@ -112,3 +112,35 @@ void ModManager::editModSettings() {
 
     alertObservers();
 };
+
+void ModManager::selectPath(fs::path& path) {
+    if (!fs::exists(path)) {
+        wxMessageBox(
+            std::string("File ") + path.string() +
+            std::string(
+                " does not exist. Please refresh your contents folder."));
+        return;
+    }
+
+    _selectedPath = path;
+    alertObservers();
+
+    /*
+try {
+    ifstream ifs(path);
+
+    SD9File* song = new SD9File(ifs);
+    AudioHandler::PlaySD9(*song);
+
+    // AudioHandler::PlayPCM(bm);
+} catch (std::runtime_error e) {
+    std::stringstream ss;
+    ss << "ERROR: Unable to play file from path \"" << path
+       << "\". \nError message: " << e.what() << ")";
+    wxMessageBox(ss.str().c_str());
+
+} catch (std::exception e) {
+    wxMessageBox("An unhandled exception has occurred.");
+}
+    */
+};

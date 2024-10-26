@@ -48,6 +48,7 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/portaudio/CMakeLists.txt")
 endif()
 
 add_subdirectory(extern/portaudio)
+add_subdirectory(extern/doctest)
 
 find_package(SndFile REQUIRED)
 
@@ -60,16 +61,7 @@ add_subdirectory(files)
 add_subdirectory(audio)
 add_subdirectory(mod_manager)
 
-# target_sources(iidx-skin-maker <INTERFACE|PUBLIC|PRI...> [items1...]
-# [<INTERFACE|PUBLIC|PRI...> [items2...] ...])
-
 # find_package(portaudio REQUIRED)
-if(WIN32)
-  target_include_directories(
-    ${CMAKE_PROJECT_NAME} PRIVATE "C:/Program Files (x86)/portaudio/include/")
-  target_link_libraries(${CMAKE_PROJECT_NAME}
-                        "C:/Program Files (x86)/portaudio/bin/libportaudio.dll")
-endif()
 
 target_include_directories(iidx-skin-maker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -77,5 +69,4 @@ target_link_libraries(
   ${CMAKE_PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES} SndFile::sndfile
                                 -lportaudio)
 
-# set(CPACK_PROJECT_NAME ${PROJECT_NAME}) set(CPACK_PROJECT_VERSION
-# ${PROJECT_VERSION}) include(CPack)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests)

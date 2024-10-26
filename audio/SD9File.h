@@ -38,6 +38,12 @@ struct SD9Info {
     uint8_t fluff4 = 0x0;
 
     uint16_t unique_index = 0x0;
+
+    static SD9Info from(char* data) {
+        SD9Info info;
+        memcpy(&info, data, sizeof(SD9Info));
+        return info;
+    };
 };
 
 class SD9File {

@@ -11,6 +11,7 @@ namespace Utils {
 
     namespace String {
         bool StartsWith(char* s1, char* s2);
-    }
+        vector<std::string> Split(const std::string& in_string, char delimiter);
+    }  // namespace String
 
 }  // namespace Utils
