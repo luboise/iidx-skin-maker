@@ -4,10 +4,12 @@
 #include <memory>
 #include "Overrides/Override.h"
 
+#define CURRENT_GAME_VERSION 31
+
 struct Mod {
     std::string name = "My Mod";
 
-    int32_t game_version = 31;
+    int32_t game_version = CURRENT_GAME_VERSION;
 
     int32_t version_major = 1;
     int32_t version_minor = 0;

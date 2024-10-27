@@ -7,5 +7,10 @@ class EditPanel : public wxPanel, public ModObserver {
     explicit EditPanel(wxWindow* parent);
 
    private:
-    void onModChanged(const Mod& mod) override;
+    fs::path _selectedPath = "";
+
+    void rebuildMainSizer();
+
+    // void onModChanged(const Mod& mod) override;
+    void onSelectedPathChanged(const PathChangedData& data) override;
 };

@@ -9,6 +9,10 @@ namespace Utils {
                       const wxString& true_option = "Yes",
                       const wxString& false_option = "No");
 
+    namespace Dialog {
+        void Error(const wxString& message);
+    }
+
     namespace String {
         bool StartsWith(char* s1, char* s2);
         vector<std::string> Split(const std::string& in_string, char delimiter);

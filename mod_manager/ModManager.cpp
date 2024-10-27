@@ -20,7 +20,8 @@ bool ModManager::changeContentsDirectory(const fs::path& newDir) {
         _rootDir = dir;
 
         _currentMod.root_dir = newDir;
-        this->alertObservers();
+
+        this->alertObservers(ALERT_TYPE::MOD_CHANGED);
     } catch (std::exception& e) {
         std::cerr << "Unable to update contents directory. Error: " << e.what()
                   << std::endl;
@@ -66,8 +67,27 @@ void ModManager::newMod() {
     }
 };
 
-void ModManager::alertObservers() {
-    for (auto* observer : _observers) observer->onModChanged(_currentMod);
+void ModManager::alertObservers(ALERT_TYPE type) {
+    if (type == ALERT_TYPE::MOD_CHANGED) {
+        for (auto* observer : _observers) {
+            observer->onModChanged(_currentMod);
+        }
+    } else if (type == ALERT_TYPE::SELECTED_PATH_CHANGED) {
+        for (auto* observer : _observers) {
+            observer->onSelectedPathChanged(PathChangedData{
+                _selectedPath, ModManager::getOverride(_selectedPath)});
+        }
+    } else if (type == ALERT_TYPE::OVERRIDE_UPDATED) {
+        for (auto* observer : _observers) {
+            // TODO: Implement this
+            // observer->onOverrideUpdated(_selectedPath);
+        }
+    } else {
+        std::cerr << "Invalid alert type encountered in alertObservers: "
+                  << static_cast<int>(type)
+                  << ".\nIgnoring this and continuing with execution."
+                  << std::endl;
+    }
 }
 
 bool ModManager::saveMod(const Mod& mod, const fs::path& location) {
@@ -102,7 +122,7 @@ bool ModManager::loadMod(const fs::path& mod_path) {
 
     changeContentsDirectory(_currentMod.root_dir);
 
-    alertObservers();
+    alertObservers(ALERT_TYPE::MOD_CHANGED);
 
     return true;
 }
@@ -110,7 +130,7 @@ bool ModManager::loadMod(const fs::path& mod_path) {
 void ModManager::editModSettings() {
     auto Popup = ModSettingsPopup(_currentMod);
 
-    alertObservers();
+    alertObservers(ALERT_TYPE::MOD_CHANGED);
 };
 
 void ModManager::selectPath(fs::path& path) {
@@ -123,7 +143,7 @@ void ModManager::selectPath(fs::path& path) {
     }
 
     _selectedPath = path;
-    alertObservers();
+    alertObservers(ALERT_TYPE::SELECTED_PATH_CHANGED);
 
     /*
 try {

@@ -50,10 +50,10 @@ class SD9File {
    public:
     // SD9File(const char* filename);
     explicit SD9File(std::ifstream&);
-
-    const SoundFile* getSoundFile() const { return _soundFile; }
-
     ~SD9File();
+
+    [[nodiscard]] const SoundFile* getSoundFile() const { return _soundFile; }
+    [[nodiscard]] SD9Info getSD9Info() const { return _sd9Header; }
 
    private:
     SD9Info _sd9Header{};

@@ -67,14 +67,23 @@ Mod Mod::deserialise(const std::string& serialised_data) {
                 throw std::invalid_argument(ss.str());
             }
 
+            std::unique_ptr<Override> override = nullptr;
+
             if (tokens[0] == SD9Override::getType()) {
-                auto override = SD9Override(tokens[1], tokens[2],
-                                            SD9Info::from(tokens[3].data()));
+                override = std::make_unique<SD9Override>(
+                    tokens[1], tokens[2], SD9Info::from(tokens[3].data()));
             } else {
                 throw std::invalid_argument(
                     "Invalid token type found for type of override: " +
                     tokens[0]);
             }
+
+            if (override == nullptr) {
+                throw std::runtime_error("Unable to pass override line:\n" +
+                                         line);
+            }
+
+            mod.setOverride(tokens[1], std::move(override));
 
             continue;
         } else if (line == OVERRIDES_BEGIN) {
@@ -87,8 +96,7 @@ Mod Mod::deserialise(const std::string& serialised_data) {
             mod.name = data;
 
             continue;
-        }
-        if (line.starts_with(DATA_DIRECTORY)) {
+        } else if (line.starts_with(DATA_DIRECTORY)) {
             auto path = fs::path(data);
 
             if (!fs::exists(path)) {
@@ -122,6 +130,8 @@ Mod Mod::deserialise(const std::string& serialised_data) {
                 std::cerr << "Unable to parse mod version minor: " << data
                           << ". Ignoring." << std::endl;
             }
+        } else {
+            throw std::runtime_error("Invalid line found:\n" + line);
         }
     }
 

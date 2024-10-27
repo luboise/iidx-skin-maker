@@ -29,7 +29,7 @@ class ModManager {
 
     void addObserver(ModObserver* observer) { _observers.insert(observer); };
     void removeObserver(ModObserver* observer) { _observers.erase(observer); }
-    void alertObservers();
+    void alertObservers(ALERT_TYPE type);
 
     static ModManager& getInstance() {
         if (_singleton == nullptr) {

@@ -48,6 +48,10 @@ bool Utils::booleanPopup(const wxString& message, const wxString& true_option,
     return popup->ShowModal() == wxID_YES;
 };
 
+void Utils::Dialog::Error(const wxString& message) {
+    wxMessageBox("b", "Error", wxICON_ERROR | wxOK);
+};
+
 vector<std::string> Utils::String::Split(const std::string& in_string,
                                          char delimiter) {
     vector<std::string> values;

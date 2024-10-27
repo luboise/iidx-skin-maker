@@ -1,5 +1,6 @@
 #include "audio/AudioHandler.h"
 #include "gui/MainFrame.h"
+#include "mod_manager/ModManager.h"
 
 class SkinMakerApp : public wxApp {
    public:
@@ -22,6 +23,18 @@ bool SkinMakerApp::OnInit() {
 
     _mainFrame = new MainFrame();
     _mainFrame->Show(true);
+
+    if (this->argc == 2) {
+        fs::path path = this->argv[1].ToStdString();
+        if (fs::exists(path)) {
+            std::cout << "Loading mod from command line argument path " << path
+                      << std::endl;
+            ModManager::getInstance().loadMod(path);
+        } else {
+            std::cerr << "Unable to load mod from command line argument "
+                      << path << std::endl;
+        }
+    }
 
     return true;
 }
