@@ -14,7 +14,7 @@ TEST_CASE("Mod Tests") {
         std::string data_test_1 = "SD9|\n";
         std::string data_test_2 = "SD9|data/test.sd9|music/music.wav\n";
         std::string data_test_3 =
-            "SD9|data/test.sd9|music/"
+            "SD9|data/test.sd9|"
             "music.wav|asdfasdfasdfasdfasdfasdfasdfasdf\n";
 
         CHECK_THROWS(Mod::deserialise(base_mod_string + data_test_1));

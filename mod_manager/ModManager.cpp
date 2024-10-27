@@ -114,15 +114,20 @@ bool ModManager::loadMod(const fs::path& mod_path) {
                   << ". Unable to load mod." << std::endl;
         return false;
     }
+    try {
+        Mod m = Mod::deserialise(data);
 
-    Mod m = Mod::deserialise(data);
+        _currentMod = std::move(m);
+        _modLocation = mod_path;
 
-    _currentMod = std::move(m);
-    _modLocation = mod_path;
+        changeContentsDirectory(_currentMod.root_dir);
 
-    changeContentsDirectory(_currentMod.root_dir);
-
-    alertObservers(ALERT_TYPE::MOD_CHANGED);
+        alertObservers(ALERT_TYPE::MOD_CHANGED);
+    } catch (std::exception& e) {
+        std::cerr << "Error while deserialising mod: " << mod_path
+                  << "\nError details: " << e.what() << std::endl;
+        return false;
+    }
 
     return true;
 }

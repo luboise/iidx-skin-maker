@@ -10,6 +10,9 @@
 #include "gui/Form/NumberCallbackBox.h"
 #include "gui/Form/TextCallbackBox.h"
 #include "mod_manager/ModObserver.h"
+
+#include "mod_manager/Overrides/SD9Override.h"
+
 #include "utils.h"
 
 EditPanel::EditPanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
@@ -23,6 +26,10 @@ void EditPanel::onSelectedPathChanged(const PathChangedData& data) {
     _selectedPath = data.path;
     this->rebuildMainSizer();
 }
+
+void EditPanel::onOverrideUpdated(const Override* override) {
+    this->rebuildMainSizer();
+};
 
 void EditPanel::rebuildMainSizer() {
     // Undefined edge case
@@ -79,14 +86,49 @@ void EditPanel::rebuildMainSizer() {
         preview_sizer->Add(preview_audio_button);
 
         auto* select_button = new wxButton(this, wxID_ANY, "Change");
-        select_button->Bind(wxEVT_COMMAND_BUTTON_CLICKED,
-                            [preview_path](wxCommandEvent&) {
-                                preview_path->SetValue("Implement me.");
-                            });
+        select_button->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this, preview_path,
+                                                           test](
+                                                              wxCommandEvent&) {
+            fs::path extension = _selectedPath.extension();
+
+            if (extension == SUPPORTED_FILE_EXTENSIONS::SD9) {
+                fs::path new_file =
+                    Utils::filePopup("Select replacement audio", "wav");
+
+                if (fs::exists(new_file)) {
+                    try {
+                        auto* override = new SD9Override(_selectedPath, *test);
+                        override->setReplacementFile(new_file);
+
+                        preview_path->SetValue("Implement me.");
+
+                        ModManager::getInstance().addOverride(_selectedPath,
+                                                              override);
+                    } catch (std::exception& e) {
+                        Utils::Dialog::Error(
+                            "Unable to create SD9 override for " +
+                            _selectedPath.string() + ".\nError: " + e.what());
+                    }
+                }
+            }
+        });
 
         preview_sizer->Add(select_button);
 
         main_sizer->Add(preview_sizer);
+
+        Override* override =
+            ModManager::getInstance().getOverride(_selectedPath);
+        if (override != nullptr) {
+            auto* temp_sizer = new wxBoxSizer(wxHORIZONTAL);
+            temp_sizer->Add(new wxStaticText(
+                this, wxID_ANY,
+                "Replaced by " + (dynamic_cast<SD9Override*>(override))
+                                     ->getReplacementFile()
+                                     .string()));
+
+            main_sizer->Add(temp_sizer);
+        }
 
         auto* audio_index = new wxBoxSizer(wxHORIZONTAL);
         audio_index->Add(new wxStaticText(this, wxID_ANY, "Audio Index"));

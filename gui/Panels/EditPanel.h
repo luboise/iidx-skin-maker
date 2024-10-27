@@ -13,4 +13,5 @@ class EditPanel : public wxPanel, public ModObserver {
 
     // void onModChanged(const Mod& mod) override;
     void onSelectedPathChanged(const PathChangedData& data) override;
+    void onOverrideUpdated(const Override* override) override;
 };

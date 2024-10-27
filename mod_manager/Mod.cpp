@@ -71,7 +71,12 @@ Mod Mod::deserialise(const std::string& serialised_data) {
 
             if (tokens[0] == SD9Override::getType()) {
                 override = std::make_unique<SD9Override>(
-                    tokens[1], tokens[2], SD9Info::from(tokens[3].data()));
+                    tokens[1], SD9Info::from(tokens[3].data()));
+
+                if (fs::exists(tokens[2])) {
+                    ((SD9Override*) override.get())
+                        ->setReplacementFile(tokens[2]);
+                }
             } else {
                 throw std::invalid_argument(
                     "Invalid token type found for type of override: " +
