@@ -9,6 +9,10 @@ namespace Utils {
                       const wxString& true_option = "Yes",
                       const wxString& false_option = "No");
 
+    namespace File {
+        bool IsSupported(const fs::path&);
+    }
+
     namespace Dialog {
         void Error(const wxString& message);
     }

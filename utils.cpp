@@ -65,3 +65,8 @@ vector<std::string> Utils::String::Split(const std::string& in_string,
 
     return values;
 };
+
+bool Utils::File::IsSupported(const fs::path& path) {
+    const std::string extension = path.extension().string();
+    return (extension == SUPPORTED_FILE_EXTENSIONS::SD9);
+}

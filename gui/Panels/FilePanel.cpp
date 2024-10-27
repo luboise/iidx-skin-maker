@@ -134,18 +134,23 @@ void FilePanel::rebuildTree() {
 
 void FilePanel::rebuildTreeRec(const wxTreeItemId& currentNodeID,
                                const Directory& currentDir) {
+    size_t supported_files = 0;
+
     // Check everything in the current directory
     for (const auto& file : currentDir.getFiles()) {
         // std::cout << file << std::endl;
-
+        {}
         auto name = file.filename().string();
-        if (!name.ends_with(".sd9")) continue;
+        if (!name.ends_with(SUPPORTED_FILE_EXTENSIONS::SD9)) {
+            continue;
+        }
+        supported_files++;
 
         this->_treeWidget->AppendItem(currentNodeID, file.filename().string(),
                                       -1, -1, new ContentsTreeItemData(file));
     }
 
-    for (const auto& dir : currentDir.getDirs()) {
+    for (const Directory& dir : currentDir.getDirs()) {
         // std::cout << dir->getPath() << std::endl;
         auto newNodeID = this->_treeWidget->AppendItem(
             currentNodeID, dir.getName(), -1, -1,
