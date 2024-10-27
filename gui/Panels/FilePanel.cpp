@@ -2,6 +2,7 @@
 
 #include <wx/event.h>
 #include <wx/msgdlg.h>
+#include <wx/treebase.h>
 
 #include <utility>
 
@@ -36,8 +37,10 @@ objectList->InsertItem(2, "Object 3");
 
     this->SetSizer(sizer);
 
-    Bind(wxEVT_TREE_ITEM_ACTIVATED, &FilePanel::onClickContentsFile, this,
-         wxID_ANY);
+    _treeWidget->Bind(wxEVT_TREE_SEL_CHANGED, &FilePanel::onTreeItemClicked,
+                      this);
+    _treeWidget->Bind(wxEVT_TREE_ITEM_ACTIVATED,
+                      &FilePanel::onTreeItemDoubleClicked, this);
 }
 
 void FilePanel::onButtonClick(wxCommandEvent& event) {
@@ -55,7 +58,7 @@ class ContentsTreeItemData : public wxTreeItemData {
     fs::path _path;
 };
 
-void FilePanel::onClickContentsFile(wxTreeEvent& event) {
+void FilePanel::onTreeItemClicked(wxTreeEvent& event) {
     wxTreeItemId id = event.GetItem();
 
     if (!id.IsOk()) {
@@ -73,6 +76,24 @@ void FilePanel::onClickContentsFile(wxTreeEvent& event) {
 
     // ((ContentsTreeItemData*)contentsTree->GetItemData(id))->GetFilePath();
 }
+
+void FilePanel::onTreeItemDoubleClicked(wxTreeEvent& event) {
+    // TODO: Move ID extraction into helper function
+    wxTreeItemId id = event.GetItem();
+
+    if (!id.IsOk()) {
+        throw std::logic_error("Invalid ID from clicked button");
+    }
+
+    // wxMessageBox("You clicked " + contentsTree->GetItemText(id));
+
+    auto& treeItem =
+        *dynamic_cast<ContentsTreeItemData*>(_treeWidget->GetItemData(id));
+
+    fs::path path = treeItem.GetFilePath();
+
+    AudioHandler::PlaySD9(path);
+};
 
 void FilePanel::onOpenNewContentsFolder(wxCommandEvent& event) {
     const wxString& dir = wxDirSelector("Select your IIDX Contents Folder");

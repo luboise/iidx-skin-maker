@@ -14,7 +14,8 @@ class FilePanel : public wxPanel, public ModObserver {
    private:
     void onButtonClick(wxCommandEvent& event);
 
-    void onClickContentsFile(wxTreeEvent& event);
+    void onTreeItemClicked(wxTreeEvent& event);
+    void onTreeItemDoubleClicked(wxTreeEvent& event);
 
     void onOpenNewContentsFolder(wxCommandEvent& event);
     void resetContentsTree();
