@@ -71,10 +71,10 @@ sf_count_t file_length_callback(void* user_data) {
 // Define the format of the virtual file
 
 SoundFile::SoundFile(char* data, uint32_t size) {
-    this->initialiseFrom(data, size);
+    this->parseAudioData(data, size);
 }
 
-bool SoundFile::initialiseFrom(char* data, uint32_t size) {
+bool SoundFile::parseAudioData(char* data, uint32_t size) {
     std::string str(data, size);
     std::istringstream iss(str);
 

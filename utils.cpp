@@ -2,7 +2,6 @@
 
 #include <wx/dirdlg.h>
 #include <wx/filedlg.h>
-#include <wx/gtk/msgdlg.h>
 
 #include <cstring>
 #include <string>

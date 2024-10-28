@@ -22,11 +22,13 @@ class Override {
 
     virtual std::string serialiseData() = 0;
 
+    [[nodiscard]] fs::path getInPath() const { return _in; }
+
     static std::string getType() { return "UNIMPLEMENTED"; };
 
    protected:
     // The path of the file to be overridden
-    fs::path _in;
+    fs::path _in = "";
 
-    std::string _out;
+    std::string _out = "";
 };

@@ -27,8 +27,10 @@ class ModManager {
         return _currentMod.getOverride(path);
     }
 
-    void addOverride(const fs::path& path, Override* override) {
-        _currentMod.setOverride(path, std::unique_ptr<Override>(override));
+    void addOverride(std::unique_ptr<Override> override) {
+        fs::path in_path = override->getInPath();
+
+        _currentMod.setOverride(in_path, std::move(override));
         alertObservers(ALERT_TYPE::OVERRIDE_UPDATED);
     }
 

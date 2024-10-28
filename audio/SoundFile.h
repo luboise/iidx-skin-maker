@@ -41,7 +41,7 @@ class SoundFile {
 
     ~SoundFile();
 
-    bool initialiseFrom(char* data, uint32_t size);
+    bool parseAudioData(char* data, uint32_t size);
 
     void exportToFile(const std::string& filename);
 

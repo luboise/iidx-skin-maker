@@ -3,7 +3,6 @@
 #include <wx/event.h>
 #include <wx/font.h>
 #include <wx/gdicmn.h>
-#include <wx/gtk/checkbox.h>
 #include <wx/layout.h>
 #include <wx/sizer.h>
 

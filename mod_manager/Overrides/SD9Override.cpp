@@ -7,7 +7,12 @@
 using std::string;
 
 SD9Override::SD9Override(fs::path in, SD9Info info)
-    : Override(std::move(in)), _info(info) {};
+    : Override(std::move(in)), _info(info) {}
+
+SD9Override::SD9Override(fs::path in) : Override(std::move(in)) {
+    auto sd9 = SD9File(getInPath());
+    _info = sd9.getSD9Info();
+}
 
 std::string SD9Override::serialiseData() {
     std::array<char, SD9_HEADER_SIZE> data{};

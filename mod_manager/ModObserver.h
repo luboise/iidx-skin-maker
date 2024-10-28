@@ -4,13 +4,14 @@
 #include "ModManager.h"
 
 struct PathChangedData {
-    fs::path path;
+    fs::path path = "";
     Override* override;
 };
 
 class ModObserver {
    public:
     ModObserver();
+
     virtual ~ModObserver();
 
     friend void ModManager::alertObservers(ALERT_TYPE type);

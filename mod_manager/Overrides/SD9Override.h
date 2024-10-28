@@ -6,7 +6,8 @@
 
 class SD9Override : public Override {
    public:
-    explicit SD9Override(fs::path in, SD9Info info);
+    explicit SD9Override(fs::path in);
+    SD9Override(fs::path in, SD9Info info);
 
     std::string serialiseData() override;
     static std::string getType() { return "SD9"; };

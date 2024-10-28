@@ -23,7 +23,7 @@ struct Mod {
     }
 
     void setOverride(const fs::path& path,
-                     std::unique_ptr<Override>(override)) {
+                     std::unique_ptr<Override>&& override) {
         if (overrides.contains(path)) {
             overrides.erase(path);
         }

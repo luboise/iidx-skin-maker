@@ -62,9 +62,18 @@ void AudioHandler::PlaySD9(const fs::path& path) {
             " does not exist on filesystem, or is otherwise invalid.");
     }
 
-    ifstream ifs(path);
     try {
+        ifstream ifs(path);
+        if (!ifs.is_open()) {
+            std::stringstream ss;
+            ss << "Input file stream could not be opened ";
+
+            throw std::runtime_error(ss.str());
+        }
+
         auto audio_file = SD9File(ifs);
+        ifs.close();
+
         AudioHandler::PlaySD9(audio_file);
     } catch (std::exception& e) {
         std::cerr << "Unable to play SD9 file: " << e.what() << std::endl;

@@ -1,7 +1,9 @@
 #pragma once
 
-#include <wx/debug.h>
+#include "files/FileHandler.h"
+
 #include <array>
+#include <sstream>
 
 #include "SoundFile.h"
 
@@ -49,8 +51,12 @@ struct SD9Info {
 class SD9File : public SoundFile {
    public:
     // SD9File(const char* filename);
-    explicit SD9File(std::ifstream&);
-    ~SD9File();
+    explicit SD9File(const fs::path& path) {
+        std::string data = FileHandler::Read(path);
+        auto ss = std::stringstream(data);
+        this->initialiseFrom(ss);
+    };
+    explicit SD9File(std::istream& in) { this->initialiseFrom(in); };
 
     SD9File(const SD9File& other) = default;
     SD9File& operator=(const SD9File& other) = default;
@@ -61,5 +67,7 @@ class SD9File : public SoundFile {
     [[nodiscard]] SD9Info getSD9Info() const { return _sd9Header; }
 
    private:
+    void initialiseFrom(std::istream&);
+
     SD9Info _sd9Header{};
 };

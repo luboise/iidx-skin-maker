@@ -1,21 +1,14 @@
 #include "SD9File.h"
 
+#include "files/FileHandler.h"
+
 #include <fstream>
-#include <sstream>
-#include <stdexcept>
 
 #include "SoundFile.h"
 
 using std::ifstream;
 
-SD9File::SD9File(ifstream& ifs) {
-    if (!ifs.is_open()) {
-        std::stringstream ss;
-        ss << "Input file stream could not be opened ";
-
-        throw std::runtime_error(ss.str());
-    }
-
+void SD9File::initialiseFrom(std::istream& ifs) {
     // Get size of file
     ifs.seekg(0, std::ios::end);
     const int64_t size = ifs.tellg();
@@ -29,12 +22,12 @@ SD9File::SD9File(ifstream& ifs) {
 
     char* data = new char[size - SD9_HEADER_SIZE + 1];
     ifs.read(data, size);
-    ifs.close();
 
-    SoundFile::initialiseFrom(data, size);
+    SoundFile::parseAudioData(data, size);
 
     delete data;
 };
+
 /*
 SD9File::SD9File(const char* filename) {
     ifstream ifs(filename);
@@ -62,5 +55,3 @@ SD9File::SD9File(const char* filename) {
     _soundFile = new SoundFile(data);
 }
 */
-
-SD9File::~SD9File() = default;
