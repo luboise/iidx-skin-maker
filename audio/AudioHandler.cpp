@@ -1,16 +1,12 @@
 #include "AudioHandler.h"
 
 #include <portaudio.h>
+#include <iostream>
+#include <memory>
 
 #include "SD9File.h"
 
 using std::ifstream;
-
-struct PlaybackSet {
-    SD9File* sd9;
-    size_t next_frame;
-    size_t total_frames;
-};
 
 PaStream* AudioHandler::_stream = nullptr;
 
@@ -26,72 +22,29 @@ bool AudioHandler::Init() {
 
 void AudioHandler::Terminate() { Pa_Terminate(); }
 
-void AudioHandler::PlaySound(char* wavData, unsigned long dataSize) {
-    PaStream* stream;
-
-    PaError err;
-
-    // Parse the wav file into relevant information
-    // PCMBufferManager* bm = new PCMBufferManager(wavData, dataSize);
-
-    return;
-
-    // Create the stream, and put the wav in it (last arg)
-    // err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 44100, 512,
-    // 						   &AudioHandler::audioCallback,
-    // bm);
-
-    // if (err != paNoError) {
-    // 	return;
-    // }
-
-    // err = Pa_StartStream(stream);
-    // if (err != paNoError) {
-    // 	throw std::logic_error("Bad stream received.");
-    // }
-}
-
-void AudioHandler::PlayPCM(PCMBufferManager& bm) {
-    PaStream* stream;
-
-    PaError err;
-
-    err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 44100, 512,
-                               &AudioHandler::audioCallback, &bm);
-
-    if (err != paNoError) {
-        throw std::logic_error("Unable to initialise audio stream.");
-    }
-
-    err = Pa_StartStream(stream);
-    if (err != paNoError) {
-        throw std::logic_error("Bad stream received.");
-    }
-}
-
 int SD9Callback(const void* input, void* out_buffer, unsigned long frame_count,
                 const PaStreamCallbackTimeInfo* timeInfo,
                 PaStreamCallbackFlags statusFlags, void* userData) {
-    auto playback_set = static_cast<PlaybackSet*>(userData);
-    auto* sound_file = playback_set->sd9->getSoundFile();
+    auto* playback_set = static_cast<PlaybackSet*>(userData);
+    auto& sound_file = playback_set->sd9;
 
     // Read the output buffer
-    float* out = static_cast<float*>(out_buffer);
+    auto* out = static_cast<float*>(out_buffer);
 
     for (unsigned i = 0; i < frame_count; i++) {
         size_t frame_index = playback_set->next_frame + i;
         if (frame_index >= playback_set->total_frames) {
-            SD9Info info = playback_set->sd9->getSD9Info();
+            SD9Info info = playback_set->sd9.getSD9Info();
 
             if (info.loop_enabled != 0) {
                 playback_set->next_frame =
-                    info.loop_start / sound_file->getChannelCount();
+                    info.loop_start / sound_file.getChannelCount();
                 return paContinue;
             }
             return paComplete;
         }
 
-        const auto& frame = sound_file->getFrame(frame_index);
+        const auto& frame = sound_file.getFrame(frame_index);
 
         for (const auto& sample : frame) {
             *(out++) = sample;
@@ -110,13 +63,49 @@ void AudioHandler::PlaySD9(const fs::path& path) {
     }
 
     ifstream ifs(path);
-    auto* audio_file = new SD9File(ifs);
-    AudioHandler::PlaySD9(*audio_file);
+    try {
+        auto audio_file = SD9File(ifs);
+        AudioHandler::PlaySD9(audio_file);
+    } catch (std::exception& e) {
+        std::cerr << "Unable to play SD9 file: " << e.what() << std::endl;
+    }
 };
 
 void AudioHandler::PlaySD9(SD9File& sd9) {
     PaError err = 0;
 
+    AudioHandler::Stop();
+
+    _playbackSet = std::make_unique<PlaybackSet>(PlaybackSet(sd9));
+
+    err = Pa_OpenDefaultStream(
+        &_stream, 0, 2, paFloat32, sd9.getSoundInfo().samplerate,
+        paFramesPerBufferUnspecified, &SD9Callback, _playbackSet.get());
+
+    if (err != paNoError) {
+        throw std::logic_error("Unable to initialise audio stream.");
+    }
+
+    AudioHandler::Start();
+};
+
+void AudioHandler::TestSound() {}
+
+void AudioHandler::Start() {
+    if (_stream == nullptr || _playbackSet == nullptr) {
+        std::cerr
+            << "Unable to start audio. No stream is available to play from. "
+            << std::endl;
+        return;
+    }
+
+    PaError err = Pa_StartStream(_stream);
+    if (err != paNoError) {
+        throw std::logic_error("Bad stream received.");
+    }
+}
+
+void AudioHandler::Stop() {
     if (AudioHandler::_stream != nullptr) {
         if (Pa_StopStream(_stream) != paNoError) {
             throw std::runtime_error("Failed to stop existing stream.");
@@ -128,29 +117,10 @@ void AudioHandler::PlaySD9(SD9File& sd9) {
         _stream = nullptr;
     }
 
-    auto* playback_set = new PlaybackSet{};
-
-    playback_set->sd9 = &sd9;
-    playback_set->next_frame = 0;
-    playback_set->total_frames = sd9.getSoundFile()->getFrameCount();
-
-    err = Pa_OpenDefaultStream(&_stream, 0, 2, paFloat32,
-                               sd9.getSoundFile()->getSoundInfo().samplerate,
-                               paFramesPerBufferUnspecified, &SD9Callback,
-                               playback_set);
-
-    if (err != paNoError) {
-        throw std::logic_error("Unable to initialise audio stream.");
-    }
-
-    err = Pa_StartStream(_stream);
-    if (err != paNoError) {
-        throw std::logic_error("Bad stream received.");
-    }
+    _playbackSet = nullptr;
 };
 
-void AudioHandler::TestSound() {}
-
+/*
 int AudioHandler::audioCallback(const void* inputBuffer, void* outputBuffer,
                                 unsigned long framesPerBuffer,
                                 const PaStreamCallbackTimeInfo* timeInfo,
@@ -163,7 +133,7 @@ int AudioHandler::audioCallback(const void* inputBuffer, void* outputBuffer,
     i16* out = (i16*)outputBuffer;
 
     (void)inputBuffer;
-    /* Prevent unused variable warning.*/
+    // Prevent unused variable warning.
 
     for (unsigned i = 0; i < framesPerBuffer; i++) {
         const PCMFrame& frame = bm.GetFrame();
@@ -178,31 +148,6 @@ int AudioHandler::audioCallback(const void* inputBuffer, void* outputBuffer,
     }
     return paContinue;
 };
-
-PCMFrame& PCMBufferManager::GetFrame() {
-    // TODO: REMOVE
-    // auto FRAMES_PER_BUFFER = 256;
-
-    // PCMFrame &returnVal =
-    // frames[this->frameCounter][this->bufferPosition++];
-
-    // if (bufferPosition >= FRAMES_PER_BUFFER) {
-    // 	bufferPosition = 0;
-    // 	this->frameCounter++;
-    // }
-    // return returnVal;
-
-    return *this->frames[this->frameCounter++];
-
-    // PCMFrame &returnVal =
-    // frames[this->frameCounter][this->bufferPosition++];
-
-    // if (bufferPosition >= FRAMES_PER_BUFFER) {
-    // 	bufferPosition = 0;
-    // 	this->frameCounter++;
-    // }
-    // return returnVal;
-}
 
 template <typename T>
 T& swap16(T& block) {
@@ -440,3 +385,48 @@ PCMBufferManager::PCMBufferManager(const ADPCMData& adpcm,
     this->frameCounter = 0;
     this->bufferPosition = 0;
 }
+
+void AudioHandler::PlayPCM(PCMBufferManager& bm) {
+    PaStream* stream;
+
+    PaError err;
+
+    err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 44100, 512,
+                               &AudioHandler::audioCallback, &bm);
+
+    if (err != paNoError) {
+        throw std::logic_error("Unable to initialise audio stream.");
+    }
+
+    err = Pa_StartStream(stream);
+    if (err != paNoError) {
+        throw std::logic_error("Bad stream received.");
+    }
+}
+
+PCMFrame& PCMBufferManager::GetFrame() {
+    // TODO: REMOVE
+    // auto FRAMES_PER_BUFFER = 256;
+
+    // PCMFrame &returnVal =
+    // frames[this->frameCounter][this->bufferPosition++];
+
+    // if (bufferPosition >= FRAMES_PER_BUFFER) {
+    // 	bufferPosition = 0;
+    // 	this->frameCounter++;
+    // }
+    // return returnVal;
+
+    return *this->frames[this->frameCounter++];
+
+    // PCMFrame &returnVal =
+    // frames[this->frameCounter][this->bufferPosition++];
+
+    // if (bufferPosition >= FRAMES_PER_BUFFER) {
+    // 	bufferPosition = 0;
+    // 	this->frameCounter++;
+    // }
+    // return returnVal;
+}
+
+*/

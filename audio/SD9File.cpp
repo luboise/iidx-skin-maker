@@ -31,7 +31,7 @@ SD9File::SD9File(ifstream& ifs) {
     ifs.read(data, size);
     ifs.close();
 
-    _soundFile = new SoundFile(data, size);
+    SoundFile::initialiseFrom(data, size);
 
     delete data;
 };
@@ -63,4 +63,4 @@ SD9File::SD9File(const char* filename) {
 }
 */
 
-SD9File::~SD9File() { delete _soundFile; }
+SD9File::~SD9File() = default;

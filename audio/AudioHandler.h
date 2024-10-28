@@ -134,19 +134,34 @@ class PCMBufferManager {
     std::vector<PCMFrame *> frames;
 };
 
+struct PlaybackSet {
+    SD9File sd9;
+    size_t next_frame = 0;
+    size_t total_frames;
+
+    // Leave as copy
+    explicit PlaybackSet(const SD9File &sd9_file)
+        : sd9(sd9_file), total_frames(sd9.getFrameCount()) {}
+};
+
 class AudioHandler {
    public:
     static bool Init();
     static void Terminate();
 
-    static void PlaySound(char *wavFile, unsigned long dataSize);
-    static void PlayPCM(PCMBufferManager &bm);
     static void PlaySD9(SD9File &);
     static void PlaySD9(const fs::path &);
+
     static void TestSound();
+
+    static void Start();
+    static void Stop();
+
+    // static void PlayPCM(PCMBufferManager &bm);
 
    private:
     static PaStream *_stream;
+    inline static std::unique_ptr<PlaybackSet> _playbackSet = nullptr;
 
     /* This routine will be called by the PortAudio engine when audio is needed.
      * It may called at interrupt level on some machines so don't do anything

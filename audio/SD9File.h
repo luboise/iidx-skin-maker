@@ -46,16 +46,20 @@ struct SD9Info {
     };
 };
 
-class SD9File {
+class SD9File : public SoundFile {
    public:
     // SD9File(const char* filename);
     explicit SD9File(std::ifstream&);
     ~SD9File();
 
-    [[nodiscard]] const SoundFile* getSoundFile() const { return _soundFile; }
+    SD9File(const SD9File& other) = default;
+    SD9File& operator=(const SD9File& other) = default;
+
+    SD9File(SD9File&& other) = default;
+    SD9File& operator=(SD9File&& other) = default;
+
     [[nodiscard]] SD9Info getSD9Info() const { return _sd9Header; }
 
    private:
     SD9Info _sd9Header{};
-    SoundFile* _soundFile;
 };

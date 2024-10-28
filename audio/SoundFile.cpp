@@ -71,30 +71,37 @@ sf_count_t file_length_callback(void* user_data) {
 // Define the format of the virtual file
 
 SoundFile::SoundFile(char* data, uint32_t size) {
+    this->initialiseFrom(data, size);
+}
+
+bool SoundFile::initialiseFrom(char* data, uint32_t size) {
     std::string str(data, size);
     std::istringstream iss(str);
 
     SF_INFO info;
 
     SF_VIRTUAL_IO virtual_io = {file_length_callback, seek_callback,
-                                read_callback, NULL, tell_callback};
+                                read_callback, nullptr, tell_callback};
 
     SNDFILE* snd = sf_open_virtual(&virtual_io, SFM_READ, &info, &iss);
 
-    if (!snd) {
+    if (snd == nullptr) {
         const char* error_text = sf_strerror(nullptr);
 
         std::stringstream ss;
-        ss << "Error opening sound file: " << sf_strerror(nullptr);
+        ss << "Error opening sound file: " << error_text;
 
-        throw std::runtime_error(ss.str());
+        return false;
     }
 
     this->initialiseData(*snd, info);
     sf_close(snd);
-}
-// SoundFile(std::istringstream&&){};
 
+    return true;
+};
+
+// SoundFile(std::istringstream&&){};
+/*
 SoundFile::SoundFile(std::istream& stream) {
     StreamDetails details{&stream, stream.tellg()};
 
@@ -108,11 +115,11 @@ SoundFile::SoundFile(std::istream& stream) {
 
     SNDFILE* snd = sf_open_virtual(&virtual_io, SFM_READ, &info, &stream);
 
-    if (!snd) {
+    if (snd == nullptr) {
         const char* error_text = sf_strerror(nullptr);
 
         std::stringstream ss;
-        ss << "Error opening sound file: " << sf_strerror(nullptr);
+        ss << "Error opening sound file: " << error_text;
 
         throw std::runtime_error(ss.str());
     }
@@ -120,6 +127,7 @@ SoundFile::SoundFile(std::istream& stream) {
     this->initialiseData(*snd, info);
     sf_close(snd);
 }
+*/
 
 void SoundFile::initialiseData(SNDFILE& snd, SF_INFO& info) {
     const uint32_t sample_count = info.frames * info.channels;
@@ -206,7 +214,7 @@ bool SoundFile::isValid() const { return this->_channels.size() > 0; }
 //     }
 // }
 
-void SoundFile::exportToFile(const std::string filename) {
+void SoundFile::exportToFile(const std::string& filename) {
     if (!this->isValid()) {
         std::cerr << "Attempting to write invalid file. Skipping..."
                   << std::endl;
@@ -287,9 +295,9 @@ SampleList SoundFile::getFrame(const int32_t frameIndex) const {
     return frame;
 }
 
-void SoundFile::setChannel(const size_t channel, const size_t offset,
-                           const SampleList samples) {
-    _channels[channel] = samples;
+void SoundFile::setChannel(size_t channel, size_t offset,
+                           SampleList&& samples) {
+    _channels[channel] = std::move(samples);
 
     /*if (samples.size() <= _channels[channel].size())
     size_t index;
@@ -305,10 +313,12 @@ SampleList SoundFile::getChannel(uint8_t channel) const {
     if (channel >= _channels.size()) {
         std::cerr << "Attempted to get channel at invalid index " << channel
                   << "." << std::endl;
-        return SampleList();
+        return {};
     }
 
-    return _channels[channel];
+    auto new_list = SampleList(_channels[channel]);
+
+    return new_list;
 }
 
 size_t SoundFile::getChannelCount() const { return _sndinfo.channels; }
@@ -320,16 +330,18 @@ size_t SoundFile::getSampleCount() const {
 
 double lanczosWindow(double x, double a) {
     if (std::abs(x) < 1e-8) return 1.0;
-    if (std::abs(x) >= a) return 0.0;
+    if (std::abs(x) >= a) {
+        return 0.0;
+    }
     return std::sin(M_PI * x) * std::sin(M_PI * x / a) / (M_PI * M_PI * x * x);
 }
 
 std::vector<SampleList> SoundFile::getWindows(const SampleList& samples,
-                                              const size_t windowSize,
-                                              const double hopSize) const {
+                                              size_t windowSize,
+                                              double hopSize) const {
     std::vector<SampleList> windows;
-    uint32_t l_index;
-    uint32_t r_index;
+    uint32_t l_index = 0;
+    uint32_t r_index = 0;
 
     size_t window_index = 0;
 
@@ -372,7 +384,9 @@ double SoundFile::getNewBeatPosition(double beat, double ratio,
 void SoundFile::resizeChannels() {
     uint32_t maxSize = 0;
     for (const auto& channel : _channels) {
-        if (channel.size() > maxSize) maxSize = channel.size();
+        if (channel.size() > maxSize) {
+            maxSize = channel.size();
+        }
     }
 
     for (auto& channel : _channels) {
