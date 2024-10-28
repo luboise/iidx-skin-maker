@@ -1,5 +1,6 @@
 #include "SD9Override.h"
 
+#include <fstream>
 #include <utility>
 #include "audio/SD9File.h"
 #include "mod_manager/Mod.h"
@@ -35,5 +36,16 @@ void SD9Override::process(fs::path out_path) {
         return;
     }
 
-    _replacementData.audio->exportToFile(out_path / _in.filename());
+    fs::path out_fs_path = out_path / _in.filename();
+
+    _replacementData.audio->exportToFile(out_fs_path);
+
+    std::string data = FileHandler::Read(out_fs_path);
+
+    std::ofstream ofs(out_fs_path);
+
+    ofs.write((char*)(&_replacementData.info), sizeof(_replacementData.info));
+    ofs.write(data.data(), data.size());
+
+    ofs.close();
 }
