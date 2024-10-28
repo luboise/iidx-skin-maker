@@ -3,7 +3,7 @@
 #include "mod_manager/ModObserver.h"
 
 class FileDetailsSizer;
-class FilePreviewSizer;
+class OverrideEditor;
 
 class EditPanel : public wxPanel, public ModObserver {
    public:
@@ -12,7 +12,7 @@ class EditPanel : public wxPanel, public ModObserver {
    private:
     fs::path _selectedPath = "";
     FileDetailsSizer* _fileDetailsSizer = nullptr;
-    FilePreviewSizer* _filePreviewSizer = nullptr;
+    OverrideEditor* _filePreviewSizer = nullptr;
 
     // void update();
 

@@ -6,8 +6,8 @@
 #include <wx/layout.h>
 #include <wx/sizer.h>
 
-#include "gui/Form/NumberCallbackBox.h"
-#include "gui/Form/TextCallbackBox.h"
+#include "gui/Forms/NumberCallbackBox.h"
+#include "gui/Forms/TextCallbackBox.h"
 #include "utils.h"
 
 enum {

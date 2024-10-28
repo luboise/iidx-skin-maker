@@ -7,8 +7,8 @@
 #include <wx/sizer.h>
 
 #include "audio/SD9File.h"
-#include "gui/Form/NumberCallbackBox.h"
-#include "gui/Form/TextCallbackBox.h"
+#include "gui/Forms/NumberCallbackBox.h"
+#include "gui/Forms/TextCallbackBox.h"
 
 enum {
     MOD_NAME = wxID_HIGHEST + 1,
