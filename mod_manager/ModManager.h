@@ -27,16 +27,20 @@ class ModManager {
         return _currentMod.getOverride(path);
     }
 
-    void addOverride(std::unique_ptr<Override> override) {
+    void addOverride(Override* override) {
         fs::path in_path = override->getInPath();
 
-        _currentMod.setOverride(in_path, std::move(override));
+        _currentMod.setOverride(in_path, override);
         alertObservers(ALERT_TYPE::OVERRIDE_UPDATED);
     }
 
     void addObserver(ModObserver* observer) { _observers.insert(observer); };
     void removeObserver(ModObserver* observer) { _observers.erase(observer); }
     void alertObservers(ALERT_TYPE type);
+
+    void exportMod(const fs::path&) const;
+
+    static void Export(const Mod&, fs::path out_parent_folder);
 
     static ModManager& getInstance() {
         if (_singleton == nullptr) {

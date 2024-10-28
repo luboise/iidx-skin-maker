@@ -24,7 +24,7 @@ class Override {
 
     [[nodiscard]] fs::path getInPath() const { return _in; }
 
-    static std::string getType() { return "UNIMPLEMENTED"; };
+    virtual std::string getType() = 0;
 
    protected:
     // The path of the file to be overridden

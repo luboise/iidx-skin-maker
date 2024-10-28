@@ -38,14 +38,15 @@ void OverrideEditor::update(wxWindow* parent) {
             });
         this->Add(preview_audio_button);
 
-        Override* override = ModManager::getInstance().getOverride(_data.path);
+        Override* override = _data.override;
         if (override != nullptr) {
+            auto* dnc = (SD9Override*)(override);
+            fs::path replacement_filepath = dnc->getReplacementFilepath();
+
             auto* temp_sizer = new wxBoxSizer(wxHORIZONTAL);
             temp_sizer->Add(new wxStaticText(
                 parent, wxID_ANY,
-                "Replaced by " + (dynamic_cast<SD9Override*>(override))
-                                     ->getReplacementFile()
-                                     .string()));
+                "Replaced by " + replacement_filepath.string()));
 
             this->Add(temp_sizer);
         }

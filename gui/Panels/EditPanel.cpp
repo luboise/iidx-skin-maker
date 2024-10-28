@@ -36,13 +36,10 @@ class FileDetailsSizer : public wxBoxSizer, public ModObserver {
 
                     if (fs::exists(to_path)) {
                         try {
-                            SD9Override* override = new SD9Override(from_path);
-                            auto unique =
-                                std::unique_ptr<SD9Override>(override);
-                            override->setReplacementFile(to_path);
+                            auto* override = new SD9Override(from_path);
+                            override->setReplacementFilepath(to_path);
 
-                            ModManager::getInstance().addOverride(
-                                std::unique_ptr<Override>(override));
+                            ModManager::getInstance().addOverride(override);
                         } catch (std::exception& e) {
                             Utils::Dialog::Error(
                                 "Unable to create SD9 override for " +

@@ -2,6 +2,8 @@
 
 #include <wx/msgdlg.h>
 #include <wx/popupwin.h>
+#include <filesystem>
+#include <stdexcept>
 
 #include "ModObserver.h"
 #include "files/FileHandler.h"
@@ -168,4 +170,69 @@ try {
     wxMessageBox("An unhandled exception has occurred.");
 }
     */
+};
+
+void ModManager::exportMod(const fs::path& path) const {
+    if (_rootDir == nullptr) {
+        std::cerr << "Unable to export mod: NULL root directory." << std::endl;
+        return;
+    }
+
+    try {
+        ModManager::Export(_currentMod, path);
+    } catch (std::exception& e) {
+        std::cerr << "Error while exporting mod: " << e.what() << std::endl;
+    }
+};
+
+void ModManager::Export(const Mod& mod, fs::path out_parent_folder) {
+    if (!fs::exists(out_parent_folder)) {
+        throw std::runtime_error("Unable to export to non-existant folder at " +
+                                 out_parent_folder.string());
+    }
+
+    /*
+temp_directory /= "iidx-skin-maker";
+
+// Verify temp folder
+
+if (!fs::exists(temp_directory)) {
+    std::cout << "Creating temporary directory for mod exporting: "
+              << temp_directory;
+    if (fs::create_directory(temp_directory)) {
+        throw std::runtime_error(
+            "Unable to create temporary folder for mod "
+            "creation.\nAttempted folder: " +
+            temp_directory.string());
+    };
+}
+    */
+
+    std::stringstream ss;
+    ss << mod.name << "_" << mod.version_major << "_" << mod.version_minor;
+
+    std::string mod_folder_name = ss.str();
+
+    // Make folder in temp
+    fs::path mod_root = out_parent_folder / mod_folder_name;
+
+    if (!fs::exists(mod_root)) {
+        if (!fs::create_directory(mod_root)) {
+            throw std::runtime_error("Unable to create mod root folder at " +
+                                     mod_root.string());
+        };
+    }
+
+    // Export every file
+    for (const auto& override_pair : mod.overrides) {
+        auto* override = override_pair.second;
+        if (override == nullptr) {
+            std::cerr
+                << "Null pointer found when exporting mod. Skipping entry at "
+                << override_pair.first;
+            continue;
+        }
+
+        override->process(mod_root);
+    }
 };

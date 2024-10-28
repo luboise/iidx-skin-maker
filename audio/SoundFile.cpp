@@ -20,9 +20,34 @@
 #define OVERLAP_RATIO_FAST (0.25)
 #define OVERLAP_RATIO_SLOW (0.625)
 
-namespace fs = std::filesystem;
-
 using std::istream;
+
+SoundFile::SoundFile(char* data, uint32_t size) {
+    this->parseAudioData(data, size);
+}
+
+SoundFile::SoundFile(const fs::path& filepath) {
+    SF_INFO info;
+
+    if (!fs::exists(filepath) || fs::is_directory(filepath)) {
+        std::cerr << "Unable to locate file: \"" << filepath
+                  << "\" or it is a directory and not a file." << std::endl;
+        return;
+    }
+
+    SNDFILE* snd = sf_open(filepath.c_str(), SFM_READ, &info);
+
+    if (snd == nullptr) {
+        std::cerr << "Error opening sound file \"" << filepath << "\""
+                  << std::endl;
+        return;
+    }
+
+    this->initialiseData(*snd, info);
+    sf_close(snd);
+}
+
+SoundFile::~SoundFile() {}
 
 sf_count_t read_callback(void* ptr, sf_count_t count, void* user_data) {
     // StreamDetails& details = *(StreamDetails*)user_data;
@@ -66,12 +91,6 @@ sf_count_t file_length_callback(void* user_data) {
     stream.seekg(curr, std::ios::beg);
 
     return length;
-}
-
-// Define the format of the virtual file
-
-SoundFile::SoundFile(char* data, uint32_t size) {
-    this->parseAudioData(data, size);
 }
 
 bool SoundFile::parseAudioData(char* data, uint32_t size) {
@@ -158,29 +177,6 @@ void SoundFile::initialiseData(SNDFILE& snd, SF_INFO& info) {
     this->_channels = channels;
 };
 
-SoundFile::SoundFile(const std::string& filepath) {
-    SF_INFO info;
-
-    if (!fs::exists(filepath) || fs::is_directory(filepath)) {
-        std::cerr << "Unable to locate file: \"" << filepath
-                  << "\" or it is a directory and not a file." << std::endl;
-        return;
-    }
-
-    SNDFILE* snd = sf_open(filepath.c_str(), SFM_READ, &info);
-
-    if (!snd) {
-        std::cerr << "Error opening sound file \"" << filepath << "\""
-                  << std::endl;
-        return;
-    }
-
-    this->initialiseData(*snd, info);
-    sf_close(snd);
-}
-
-SoundFile::~SoundFile() {}
-
 bool SoundFile::isValid() const { return this->_channels.size() > 0; }
 
 // void SoundFile::addSwing(const double bpm, double offset) {
@@ -214,7 +210,7 @@ bool SoundFile::isValid() const { return this->_channels.size() > 0; }
 //     }
 // }
 
-void SoundFile::exportToFile(const std::string& filename) {
+void SoundFile::exportToFile(const fs::path& filename) {
     if (!this->isValid()) {
         std::cerr << "Attempting to write invalid file. Skipping..."
                   << std::endl;
@@ -236,6 +232,11 @@ void SoundFile::exportToFile(const std::string& filename) {
     // Remove const binding from const function
     SF_INFO info = _sndinfo;
     SNDFILE* snd = sf_open(filename.c_str(), SFM_WRITE, &info);
+
+    if (snd == nullptr) {
+        std::cerr << "Unable to open path" << filename << " for writing.";
+        return;
+    }
 
     sf_write_float(snd, outSamples.data(), outSamples.size());
     sf_close(snd);

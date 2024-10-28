@@ -23,7 +23,7 @@ class SoundFile {
     SoundFile() = default;
 
     // Constructors
-    explicit SoundFile(const std::string& filepath);
+    explicit SoundFile(const fs::path& filepath);
     explicit SoundFile(std::istream&);
     SoundFile(char* data, uint32_t size);
 
@@ -43,7 +43,7 @@ class SoundFile {
 
     bool parseAudioData(char* data, uint32_t size);
 
-    void exportToFile(const std::string& filename);
+    void exportToFile(const fs::path& filename);
 
     [[nodiscard]] bool isValid() const;
     [[nodiscard]] double getSoundLength() const;

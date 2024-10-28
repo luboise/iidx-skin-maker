@@ -8,7 +8,7 @@
 #include "mod_manager/ModManager.h"
 #include "utils.h"
 
-enum { ID_CHANGE_CONTENTS = wxID_LOWEST - 1 };
+enum { ID_CHANGE_CONTENTS = wxID_LOWEST - 10, ID_EXPORT_MOD };
 
 MainMenuBar::MainMenuBar(wxWindow* parent) : wxMenuBar() {
     auto& mod_manager = ModManager::getInstance();
@@ -23,6 +23,8 @@ MainMenuBar::MainMenuBar(wxWindow* parent) : wxMenuBar() {
 
     fileMenu->Append(wxID_SAVE, "Save Mod");
     // fileMenu->Bind(wxID_SAVE, [&mod_manager]() { mod_manager.saveMod(); });
+
+    fileMenu->Append(ID_EXPORT_MOD, "Export Mod");
 
     fileMenu->Append(wxID_EXIT, "Exit");
 
@@ -77,12 +79,23 @@ void MainMenuBar::onMenuOptionClicked(wxCommandEvent& event) {
             mmgr.loadMod(path);
         } break;
         case wxID_SAVE:
-            mmgr.saveMod();
+            try {
+                mmgr.saveMod();
+            } catch (std::exception& e) {
+                std::cerr << "Unable to save mod.\nError details: " << e.what()
+                          << std::endl;
+            }
             break;
 
         case wxID_EXIT:
             wxExit();
             break;
+
+        case ID_EXPORT_MOD: {
+            auto path = Utils::directoryPopup("Select the mod's parent folder");
+            mmgr.exportMod(path);
+        } break;
+
         case ID_CHANGE_CONTENTS: {
             auto path = Utils::directoryPopup("Locate your contents folder");
             mmgr.changeContentsDirectory(path);

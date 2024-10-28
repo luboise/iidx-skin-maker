@@ -16,19 +16,18 @@ struct Mod {
 
     fs::path root_dir = "";
 
-    std::map<fs::path, std::unique_ptr<Override>> overrides;
+    std::map<fs::path, Override*> overrides;
 
     bool hasOverride(const fs::path& path) {
         return this->overrides.find(path) != overrides.end();
     }
 
-    void setOverride(const fs::path& path,
-                     std::unique_ptr<Override>&& override) {
+    void setOverride(const fs::path& path, Override* override) {
         if (overrides.contains(path)) {
             overrides.erase(path);
         }
 
-        overrides[path] = std::move(override);
+        overrides[path] = override;
     };
 
     Override* getOverride(const fs::path& path) {
@@ -37,7 +36,7 @@ struct Mod {
             return nullptr;
         }
 
-        return found->second.get();
+        return found->second;
     }
 
     [[nodiscard]] std::string serialise() const;
