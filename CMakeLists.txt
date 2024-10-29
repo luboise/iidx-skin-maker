@@ -73,19 +73,21 @@ endif()
 
 # set(wxWidgets_LIBRARIES)
 
-set(WXWIDGETS_MODULES wx::net wx::core wx::base)
-
 if(WIN32)
   add_executable(iidx-skin-maker WIN32 src/main.cpp)
-  target_link_libraries(iidx-skin-maker PRIVATE ${WXWIDGETS_MODULES} PortAudio)
+
+  set(WX_IMPORTS wx::net wx::core wx::base)
+  set(PORTAUDIO_IMPORTS PortAudio)
 else()
   add_executable(iidx-skin-maker src/main.cpp)
-  target_link_libraries(iidx-skin-maker PRIVATE ${wxWidgets_LIBRARIES}
-                                                -lportaudio)
+
+  set(WX_IMPORTS ${wxWidgets_LIBRARIES})
+  set(PORTAUDIO_IMPORTS -lportaudio)
 endif()
 
-target_link_libraries(iidx-skin-maker PRIVATE SndFile::sndfile)
+target_link_libraries(
+  iidx-skin-maker PRIVATE ${WX_IMPORTS} ${PORTAUDIO_IMPORTS} SndFile::sndfile)
 
 add_subdirectory(src)
 
-# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests)

@@ -24,6 +24,10 @@ class Directory {
         return _subdirs;
     };
 
+    [[nodiscard]] fs::path getProximated(const fs::path& root_path) const {
+        return _path.lexically_proximate(root_path);
+    }
+
    private:
     void buildDirectory();
 

@@ -45,7 +45,7 @@ class SD9Override : public Override {
         }
     }
 
-    void process(fs::path out_path) override;
+    void process(const ProcessData& process_data) override;
 
    private:
     SD9Replacement _replacementData{};

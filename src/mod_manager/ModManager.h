@@ -23,12 +23,14 @@ class ModManager {
 
     void selectPath(fs::path& path);
 
+    fs::path getSelectedPath() { return this->getRootPath() / _selectedPath; };
+
     Override* getOverride(const fs::path& path) {
         return _currentMod.getOverride(path);
     }
 
     void addOverride(Override* override) {
-        fs::path in_path = override->getInPath();
+        fs::path in_path = override->proximatePath();
 
         _currentMod.setOverride(in_path, override);
         alertObservers(ALERT_TYPE::OVERRIDE_UPDATED);
@@ -56,6 +58,14 @@ class ModManager {
         }
 
         return *_rootDir;
+    };
+
+    [[nodiscard]] fs::path getRootPath() const {
+        if (_rootDir == nullptr) {
+            throw std::runtime_error("Root directory is uninitialised.");
+        }
+
+        return _rootDir->getPath();
     };
 
    private:

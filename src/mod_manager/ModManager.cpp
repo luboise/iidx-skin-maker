@@ -8,6 +8,7 @@
 #include "ModObserver.h"
 #include "files/FileHandler.h"
 #include "gui/Popups/ModSettingsPopup.h"
+#include "mod_manager/Mod.h"
 #include "utils.h"
 
 ModManager* ModManager::_singleton = nullptr;
@@ -76,8 +77,9 @@ void ModManager::alertObservers(ALERT_TYPE type) {
         }
     } else if (type == ALERT_TYPE::SELECTED_PATH_CHANGED) {
         for (auto* observer : _observers) {
-            observer->onSelectedPathChanged(PathChangedData{
-                _selectedPath, ModManager::getOverride(_selectedPath)});
+            observer->onSelectedPathChanged(
+                PathChangedData{this->getSelectedPath(),
+                                ModManager::getOverride(_selectedPath)});
         }
     } else if (type == ALERT_TYPE::OVERRIDE_UPDATED) {
         for (auto* observer : _observers) {
@@ -149,7 +151,7 @@ void ModManager::selectPath(fs::path& path) {
         return;
     }
 
-    _selectedPath = path;
+    _selectedPath = path.lexically_proximate(this->getRootPath());
     alertObservers(ALERT_TYPE::SELECTED_PATH_CHANGED);
 
     /*
@@ -223,6 +225,9 @@ if (!fs::exists(temp_directory)) {
         };
     }
 
+    ProcessData process_data{};
+    process_data.out_root = mod_root;
+
     // Export every file
     for (const auto& override_pair : mod.overrides) {
         auto* override = override_pair.second;
@@ -233,6 +238,6 @@ if (!fs::exists(temp_directory)) {
             continue;
         }
 
-        override->process(mod_root);
+        override->process(process_data);
     }
 };
