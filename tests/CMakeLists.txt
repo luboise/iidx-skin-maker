@@ -1,17 +1,19 @@
 enable_testing()
 
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../src/)
+
 add_executable(
   Tests
   test_main.cpp
   test_mod.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_manager/Mod.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mod_manager/Overrides/SD9Override.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../files/FileHandler.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../audio/SD9File.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../audio/SoundFile.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../utils.cpp)
+  ${SRC_DIR}/../mod_manager/Mod.cpp
+  ${SRC_DIR}/../mod_manager/Overrides/SD9Override.cpp
+  ${SRC_DIR}/../files/FileHandler.cpp
+  ${SRC_DIR}/../audio/SD9File.cpp
+  ${SRC_DIR}/../audio/SoundFile.cpp
+  ${SRC_DIR}/../utils.cpp)
 
-target_include_directories(Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
+target_include_directories(Tests PRIVATE $SRC_DIR)
 target_link_libraries(Tests PRIVATE ${WXWIDGETS_MODULES} SndFile::sndfile
                                     doctest PortAudio)
 

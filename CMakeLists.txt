@@ -19,9 +19,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BASE_OUTPUT_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BASE_OUTPUT_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BASE_OUTPUT_DIR})
 
-# if(WIN32) set(wxWidgets_ROOT_DIR $ENV{WXWIN}) set(wxWidgets_LIB_DIR
-# "C:/wx/3.2.4/lib/gcc1030TDM_x64_dll") endif()
-
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
   # Update submodules as needed
@@ -48,49 +45,47 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/portaudio/CMakeLists.txt")
   )
 endif()
 
-# find_package(wxWidgets REQUIRED COMPONENTS net core base)
-# if(wxWidgets_USE_FILE) # not defined in CONFIG mode
-# include(${wxWidgets_USE_FILE}) endif()
-
-# find_package(SndFile REQUIRED) find_package(portaudio REQUIRED)
-
-# set(wxWidgets_LIBRARIES)
+add_subdirectory(extern/doctest)
 
 if(WIN32)
   set(CMAKE_MSVC_RUNTIME_LIBRARY, MultiThreaded)
+
+  set(wxBUILD_SHARED OFF)
+  add_subdirectory(extern/wxwidgets)
+
+  add_subdirectory(extern/portaudio)
+  include_directories(extern/portaudio/include)
+
+  set(BUILD_PROGRAMS OFF)
+  set(BUILD_EXAMPLES OFF)
+  set(BUILD_TESTING OFF)
+  add_subdirectory(extern/libsndfile)
+else()
+
+  find_package(wxWidgets REQUIRED COMPONENTS net core base)
+  if(wxWidgets_USE_FILE)
+    include(${wxWidgets_USE_FILE})
+  endif()
+
+  find_package(SndFile REQUIRED)
+  # find_package(portaudio_static REQUIRED)
 endif()
 
-set(wxBUILD_SHARED OFF)
-add_subdirectory(extern/wxwidgets)
+# set(wxWidgets_LIBRARIES)
 
 set(WXWIDGETS_MODULES wx::net wx::core wx::base)
 
-add_subdirectory(extern/portaudio)
-include_directories(extern/portaudio/include)
-
-add_subdirectory(extern/doctest)
-
-set(BUILD_PROGRAMS OFF)
-set(BUILD_EXAMPLES OFF)
-set(BUILD_TESTING OFF)
-add_subdirectory(extern/libsndfile)
-
-# Extra Folders
 if(WIN32)
-  add_executable(iidx-skin-maker WIN32 main.cpp utils.cpp)
+  add_executable(iidx-skin-maker WIN32 src/main.cpp)
+  target_link_libraries(iidx-skin-maker PRIVATE ${WXWIDGETS_MODULES} PortAudio)
 else()
-  add_executable(iidx-skin-maker main.cpp utils.cpp)
+  add_executable(iidx-skin-maker src/main.cpp)
+  target_link_libraries(iidx-skin-maker PRIVATE ${wxWidgets_LIBRARIES}
+                                                -lportaudio)
 endif()
-target_precompile_headers(iidx-skin-maker PRIVATE pch.h)
 
-add_subdirectory(gui)
-add_subdirectory(files)
-add_subdirectory(audio)
-add_subdirectory(mod_manager)
+target_link_libraries(iidx-skin-maker PRIVATE SndFile::sndfile)
 
-target_include_directories(iidx-skin-maker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${WXWIDGETS_MODULES}
-                                                    SndFile::sndfile PortAudio)
+add_subdirectory(src)
 
 # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests)
