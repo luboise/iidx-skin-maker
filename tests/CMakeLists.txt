@@ -12,8 +12,8 @@ add_executable(
   ${CMAKE_CURRENT_SOURCE_DIR}/../utils.cpp)
 
 target_include_directories(Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
-target_link_libraries(Tests PRIVATE ${wxWidgets_LIBRARIES} SndFile::sndfile
-                                    -lportaudio)
+target_link_libraries(Tests PRIVATE ${WXWIDGETS_MODULES} SndFile::sndfile
+                                    doctest PortAudio)
 
 target_precompile_headers(Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../pch.h)
 

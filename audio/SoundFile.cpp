@@ -35,7 +35,7 @@ SoundFile::SoundFile(const fs::path& filepath) {
         return;
     }
 
-    SNDFILE* snd = sf_open(filepath.c_str(), SFM_READ, &info);
+    SNDFILE* snd = sf_open(filepath.string().c_str(), SFM_READ, &info);
 
     if (snd == nullptr) {
         std::cerr << "Error opening sound file \"" << filepath << "\""
@@ -231,7 +231,7 @@ void SoundFile::exportToFile(const fs::path& filename) {
 
     // Remove const binding from const function
     SF_INFO info = _sndinfo;
-    SNDFILE* snd = sf_open(filename.c_str(), SFM_WRITE, &info);
+    SNDFILE* snd = sf_open(filename.string().c_str(), SFM_WRITE, &info);
 
     if (snd == nullptr) {
         std::cerr << "Unable to open path" << filename << " for writing.";

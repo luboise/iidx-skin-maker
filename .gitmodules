@@ -4,3 +4,9 @@
 [submodule "extern/doctest"]
 	path = extern/doctest
 	url = git@github.com:doctest/doctest.git
+[submodule "extern/wxwidgets"]
+	path = extern/wxwidgets
+	url = git@github.com:wxwidgets/wxwidgets.git
+[submodule "extern/libsndfile"]
+	path = extern/libsndfile
+	url = git@github.com:libsndfile/libsndfile.git
