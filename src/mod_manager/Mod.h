@@ -30,6 +30,19 @@ struct Mod {
         overrides[path] = override;
     };
 
+    void removeOverride(Override* override) {
+        for (auto& pair : this->overrides) {
+            if (pair.second == override) {
+                delete pair.second;
+                this->overrides.erase(pair.first);
+                return;
+            }
+        }
+
+        std::cerr << "WARNING: Attempted to remove override " << override
+                  << " which does not belong to the mod." << std::endl;
+    }
+
     Override* getOverride(const fs::path& path) {
         auto found = overrides.find(path);
         if (found == overrides.end()) {

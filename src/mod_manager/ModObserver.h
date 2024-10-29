@@ -4,8 +4,13 @@
 #include "ModManager.h"
 
 struct PathChangedData {
-    fs::path path = "";
+    fs::path root_path = "";
+    fs::path tail_path = "";
     Override* override;
+
+    [[nodiscard]] fs::path get_full_path() const {
+        return root_path / tail_path;
+    }
 };
 
 class ModObserver {

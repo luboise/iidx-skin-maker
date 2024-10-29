@@ -23,7 +23,10 @@ class ModManager {
 
     void selectPath(fs::path& path);
 
-    fs::path getSelectedPath() { return this->getRootPath() / _selectedPath; };
+    fs::path getSelectedPath(bool get_full_path = false) {
+        return get_full_path ? this->getRootPath() / _selectedPath
+                             : _selectedPath;
+    };
 
     Override* getOverride(const fs::path& path) {
         return _currentMod.getOverride(path);
@@ -33,6 +36,13 @@ class ModManager {
         fs::path in_path = override->proximatePath();
 
         _currentMod.setOverride(in_path, override);
+        alertObservers(ALERT_TYPE::MOD_CHANGED);
+    }
+
+    void removeOverride(Override* override) {
+        _currentMod.removeOverride(override);
+
+        alertObservers(ALERT_TYPE::MOD_CHANGED);
         alertObservers(ALERT_TYPE::OVERRIDE_UPDATED);
     }
 
@@ -40,7 +50,7 @@ class ModManager {
     void removeObserver(ModObserver* observer) { _observers.erase(observer); }
     void alertObservers(ALERT_TYPE type);
 
-    void exportMod(const fs::path&) const;
+    [[nodiscard]] bool exportMod(const fs::path&) const;
 
     static void Export(const Mod&, fs::path out_parent_folder);
 

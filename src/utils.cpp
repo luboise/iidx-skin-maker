@@ -48,7 +48,7 @@ bool Utils::booleanPopup(const wxString& message, const wxString& true_option,
 };
 
 void Utils::Dialog::Error(const wxString& message) {
-    wxMessageBox("b", "Error", wxICON_ERROR | wxOK);
+    wxMessageBox(message, "Error", wxICON_ERROR | wxOK);
 };
 
 vector<std::string> Utils::String::Split(const std::string& in_string,

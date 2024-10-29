@@ -2,6 +2,7 @@
 
 #include "files/FileHandler.h"
 
+#include "mod_manager/ModManager.h"
 #include "mod_manager/ModObserver.h"
 
 #include "OverrideEditor.h"
@@ -26,7 +27,12 @@ class FileDetailsSizer : public wxBoxSizer, public ModObserver {
 
         _overrideButton->Bind(
             wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent&) {
-                const fs::path& from_path = _data.path;
+                if (_data.override != nullptr) {
+                    ModManager::getInstance().removeOverride(_data.override);
+                    return;
+                }
+
+                const fs::path& from_path = _data.tail_path;
 
                 fs::path extension = from_path.extension();
 
@@ -59,9 +65,10 @@ class FileDetailsSizer : public wxBoxSizer, public ModObserver {
     wxButton* _overrideButton = nullptr;
 
     void refresh() {
-        _filenameCtrl->SetValue(_data.path.string());
+        auto full_path = _data.get_full_path();
+        _filenameCtrl->SetValue(full_path.string());
 
-        if (!fs::exists(_data.path)) {
+        if (!fs::exists(full_path)) {
             _overrideButton->Disable();
         } else {
             _overrideButton->Enable();
@@ -95,7 +102,7 @@ EditPanel::EditPanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
 }
 
 void EditPanel::onSelectedPathChanged(const PathChangedData& data) {
-    _selectedPath = data.path;
+    _selectedPath = data.root_path / data.tail_path;
 }
 
 /*

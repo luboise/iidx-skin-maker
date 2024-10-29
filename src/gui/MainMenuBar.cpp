@@ -93,7 +93,16 @@ void MainMenuBar::onMenuOptionClicked(wxCommandEvent& event) {
 
         case ID_EXPORT_MOD: {
             auto path = Utils::directoryPopup("Select the mod's parent folder");
-            mmgr.exportMod(path);
+            if (mmgr.exportMod(path)) {
+                wxMessageDialog dialog(nullptr, "Mod successfully exported",
+                                       "Export Details", wxOK);
+                dialog.ShowModal();
+            } else {
+                wxMessageDialog dialog(nullptr, "Failed to export mod",
+                                       "Export Details", wxOK | wxICON_ERROR);
+                dialog.ShowModal();
+            }
+
         } break;
 
         case ID_CHANGE_CONTENTS: {

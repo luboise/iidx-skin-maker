@@ -1,16 +1,32 @@
 #include "OverrideEditor.h"
+#include <filesystem>
 
+#include "audio/AudioHandler.h"
 #include "gui/Forms/ModLoopChanger.h"
 #include "mod_manager/Overrides/SD9Override.h"
+
+#include "utils.h"
 
 void OverrideEditor::update(wxWindow* parent) {
     this->Clear(true);
 
-    if (_data.path.extension() == SUPPORTED_FILE_EXTENSIONS::SD9) {
+    fs::path full_path = _data.get_full_path();
+
+    if (full_path == "") {
+        return;
+    }
+
+    if (!fs::exists(full_path)) {
+        Utils::Dialog::Error("OverrideEditor: Path " + full_path.string() +
+                             " could not be found.");
+        return;
+    }
+
+    if (full_path.extension() == SUPPORTED_FILE_EXTENSIONS::SD9) {
         SD9File* audio_file = nullptr;
 
         try {
-            ifstream ifs(_data.path);
+            ifstream ifs(full_path);
             audio_file = new SD9File(ifs);
             if (audio_file == nullptr) {
                 throw std::logic_error(
@@ -18,7 +34,7 @@ void OverrideEditor::update(wxWindow* parent) {
             }
         } catch (std::exception& e) {
             Utils::Dialog::Error("Unable to read SD9 file " +
-                                 _data.path.string() + ".\nError: " + e.what());
+                                 full_path.string() + ".\nError: " + e.what());
             return;
         }
 
@@ -29,10 +45,10 @@ void OverrideEditor::update(wxWindow* parent) {
         preview_audio_button->Bind(
             wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent&) {
                 try {
-                    AudioHandler::PlaySD9(_data.path);
+                    AudioHandler::PlaySD9(_data.get_full_path());
                 } catch (std::exception& e) {
                     Utils::Dialog::Error("Unable to preview SD9 file " +
-                                         _data.path.string() +
+                                         _data.get_full_path().string() +
                                          ".\nError: " + e.what());
                 }
             });

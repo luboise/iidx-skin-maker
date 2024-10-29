@@ -78,7 +78,7 @@ void ModManager::alertObservers(ALERT_TYPE type) {
     } else if (type == ALERT_TYPE::SELECTED_PATH_CHANGED) {
         for (auto* observer : _observers) {
             observer->onSelectedPathChanged(
-                PathChangedData{this->getSelectedPath(),
+                PathChangedData{this->getRootPath(), this->getSelectedPath(),
                                 ModManager::getOverride(_selectedPath)});
         }
     } else if (type == ALERT_TYPE::OVERRIDE_UPDATED) {
@@ -174,17 +174,20 @@ try {
     */
 };
 
-void ModManager::exportMod(const fs::path& path) const {
+bool ModManager::exportMod(const fs::path& path) const {
     if (_rootDir == nullptr) {
         std::cerr << "Unable to export mod: NULL root directory." << std::endl;
-        return;
+        return false;
     }
 
     try {
         ModManager::Export(_currentMod, path);
     } catch (std::exception& e) {
         std::cerr << "Error while exporting mod: " << e.what() << std::endl;
+        return false;
     }
+
+    return true;
 };
 
 void ModManager::Export(const Mod& mod, fs::path out_parent_folder) {
