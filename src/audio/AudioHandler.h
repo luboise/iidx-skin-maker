@@ -15,6 +15,8 @@ using u8 = unsigned char;
 using i8 = char;
 using i16 = short;
 
+using VolumeType = double;
+
 union AudioFrame {
     struct {
         int right : 4;  // 4 bits for the right half
@@ -138,6 +140,7 @@ struct PlaybackSet {
     SD9File sd9;
     size_t next_frame = 0;
     size_t total_frames;
+    double volume{1};
 
     // Leave as copy
     explicit PlaybackSet(const SD9File &sd9_file)
@@ -165,10 +168,26 @@ class AudioHandler {
     static void Start();
     static void Stop();
 
+    static void SetVolume(VolumeType new_volume) {
+        auto normalised_volume = new_volume / 100;
+        if (normalised_volume < 0 || normalised_volume > 100) {
+            std::cerr << "Unable to set volume to new value " << new_volume
+                      << ". Keeping old value of " << _volume << "."
+                      << std::endl;
+        }
+
+        _volume = normalised_volume;
+        if (_playbackSet) {
+            _playbackSet->volume = normalised_volume;
+        }
+    }
+
     // static void PlayPCM(PCMBufferManager &bm);
 
    private:
     static PaStream *_stream;
+    inline static VolumeType _volume{0};
+
     inline static std::unique_ptr<PlaybackSet> _playbackSet = nullptr;
 
     /* This routine will be called by the PortAudio engine when audio is needed.

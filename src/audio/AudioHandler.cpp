@@ -49,7 +49,7 @@ int SD9Callback(const void* input, void* out_buffer, unsigned long frame_count,
         const auto& frame = sound_file.getFrame(frame_index);
 
         for (const auto& sample : frame) {
-            *(out++) = sample;
+            *(out++) = sample * playback_set->volume;
         }
     }
 
@@ -88,6 +88,7 @@ void AudioHandler::PlaySD9(SD9File& sd9) {
     AudioHandler::Stop();
 
     _playbackSet = std::make_unique<PlaybackSet>(PlaybackSet(sd9));
+    _playbackSet->volume = _volume;
 
     err = Pa_OpenDefaultStream(
         &_stream, 0, 2, paFloat32, sd9.getSoundInfo().samplerate,

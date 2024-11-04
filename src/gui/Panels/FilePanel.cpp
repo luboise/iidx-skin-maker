@@ -7,7 +7,9 @@
 #include <utility>
 
 #include "audio/AudioHandler.h"
-#include "audio/SD9File.h"
+
+#include "gui/Components/VolumeControl.h"
+
 #include "mod_manager/ModManager.h"
 
 #include "gui/MainFrame.h"
@@ -15,11 +17,14 @@
 FilePanel::FilePanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 
-    wxButton* add_entity_button = new wxButton(this, ID_ADD_ENTITY, "+");
+    // Volume control here
+    sizer->Add(new VolumeControl(this));
+
+    // wxButton* add_entity_button = new wxButton(this, ID_ADD_ENTITY, "+");
 
     this->_treeWidget = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
                                        wxSize(150, 500), wxTR_DEFAULT_STYLE);
-    sizer->Add(add_entity_button);
+    // sizer->Add(add_entity_button);
     sizer->Add(_treeWidget, 0, wxEXPAND | wxALL);
 
     /*

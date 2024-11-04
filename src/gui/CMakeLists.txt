@@ -7,4 +7,5 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/Forms/ModLoopChanger.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/Panels/EditPanel.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/Panels/OverrideEditor.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/Popups/ModSettingsPopup.cpp)
+          ${CMAKE_CURRENT_SOURCE_DIR}/Popups/ModSettingsPopup.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/Components/VolumeControl.cpp)
