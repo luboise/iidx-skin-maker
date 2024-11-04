@@ -34,15 +34,14 @@ class ModManager {
 
     void addOverride(Override* override) {
         fs::path in_path = override->proximatePath();
-
         _currentMod.setOverride(in_path, override);
-        alertObservers(ALERT_TYPE::MOD_CHANGED);
+
+        alertObservers(ALERT_TYPE::OVERRIDE_UPDATED);
     }
 
     void removeOverride(Override* override) {
         _currentMod.removeOverride(override);
 
-        alertObservers(ALERT_TYPE::MOD_CHANGED);
         alertObservers(ALERT_TYPE::OVERRIDE_UPDATED);
     }
 

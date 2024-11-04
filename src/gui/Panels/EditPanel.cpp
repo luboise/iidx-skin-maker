@@ -84,6 +84,11 @@ class FileDetailsSizer : public wxBoxSizer, public ModObserver {
         _data = data;
         this->refresh();
     };
+
+    void onOverrideUpdated(Override* override) override {
+        this->_data.override = override;
+        this->refresh();
+    }
 };
 
 EditPanel::EditPanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {

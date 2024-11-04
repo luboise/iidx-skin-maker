@@ -53,5 +53,5 @@ struct Mod {
     }
 
     [[nodiscard]] std::string serialise() const;
-    static Mod deserialise(const std::string&);
+    static Mod deserialise(std::istream&);
 };

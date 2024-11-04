@@ -17,8 +17,15 @@ TEST_CASE("Mod Tests") {
             "SD9|data/test.sd9|"
             "music.wav|asdfasdfasdfasdfasdfasdfasdfasdf\n";
 
-        CHECK_THROWS(Mod::deserialise(base_mod_string + data_test_1));
-        CHECK_THROWS(Mod::deserialise(base_mod_string + data_test_2));
-        CHECK_NOTHROW(Mod::deserialise(base_mod_string + data_test_3));
+        std::stringstream ss;
+
+        ss = std::stringstream(base_mod_string + data_test_1);
+        CHECK_THROWS(Mod::deserialise(ss));
+
+        ss = std::stringstream(base_mod_string + data_test_2);
+        CHECK_THROWS(Mod::deserialise(ss));
+
+        ss = std::stringstream(base_mod_string + data_test_3);
+        CHECK_NOTHROW(Mod::deserialise(ss));
     }
 }

@@ -25,10 +25,11 @@ ModLoopChanger::ModLoopChanger(wxWindow* parent, SD9Info* info)
 
     enabled_sizer->Add(_enabledCheckbox);
 
-    auto* loop_start_sizer =
-        new NumberCallbackBox(parent, "Loop Start", info->loop_start);
+    auto* loop_start_sizer = new NumberCallbackBox(parent, "Loop Start",
+                                                   info->loop_start_byte_offset,
+                                                   0, info->audio_size);
     auto* loop_end_sizer =
-        new NumberCallbackBox(parent, "Loop End", info->loop_end);
+        new NumberCallbackBox(parent, "Loop End", info->loop_end_byte_offset);
 
     constexpr auto PADDING_SIZE = 10;
 

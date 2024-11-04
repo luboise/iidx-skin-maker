@@ -33,12 +33,14 @@ int SD9Callback(const void* input, void* out_buffer, unsigned long frame_count,
 
     for (unsigned i = 0; i < frame_count; i++) {
         size_t frame_index = playback_set->next_frame + i;
-        if (frame_index >= playback_set->total_frames) {
+
+        if (frame_index >= playback_set->getFinalFrame()) {
             SD9Info info = playback_set->sd9.getSD9Info();
 
             if (info.loop_enabled != 0) {
                 playback_set->next_frame =
-                    info.loop_start / sound_file.getChannelCount();
+                    // info.loop_start / sound_file.getChannelCount();
+                    info.loop_start_byte_offset / SD9_SAMPLE_SIZE;
                 return paContinue;
             }
             return paComplete;

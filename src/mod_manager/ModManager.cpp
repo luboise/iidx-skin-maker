@@ -111,15 +111,18 @@ bool ModManager::saveMod(const Mod& mod, const fs::path& location) {
 }
 
 bool ModManager::loadMod(const fs::path& mod_path) {
-    std::string data = FileHandler::Read(mod_path);
+    // std::string data = FileHandler::Read(mod_path);
 
-    if (data == "") {
+    std::ifstream ifs(mod_path, std::ios::binary);
+
+    if (!ifs.is_open()) {
         std::cerr << "Invalid file read for mod path " << mod_path
                   << ". Unable to load mod." << std::endl;
         return false;
     }
+
     try {
-        Mod m = Mod::deserialise(data);
+        Mod m = Mod::deserialise(ifs);
 
         _currentMod = std::move(m);
         _modLocation = mod_path;
@@ -128,11 +131,13 @@ bool ModManager::loadMod(const fs::path& mod_path) {
 
         alertObservers(ALERT_TYPE::MOD_CHANGED);
     } catch (std::exception& e) {
+        ifs.close();
         std::cerr << "Error while deserialising mod: " << mod_path
                   << "\nError details: " << e.what() << std::endl;
         return false;
     }
 
+    ifs.close();
     return true;
 }
 

@@ -46,15 +46,13 @@ std::string Mod::serialise() const {
     return ss.str();
 }
 
-Mod Mod::deserialise(const std::string& serialised_data) {
-    std::stringstream ss(serialised_data);
-
+Mod Mod::deserialise(std::istream& stream) {
     Mod mod{};
 
     bool processing_overrides = false;
 
     std::string line;
-    while (std::getline(ss, line)) {
+    while (std::getline(stream, line)) {
         if (processing_overrides) {
             vector<std::string> tokens =
                 Utils::String::Split(line, OVERRIDE_SEP_CHAR);

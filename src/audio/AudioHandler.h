@@ -142,6 +142,14 @@ struct PlaybackSet {
     // Leave as copy
     explicit PlaybackSet(const SD9File &sd9_file)
         : sd9(sd9_file), total_frames(sd9.getFrameCount()) {}
+
+    [[nodiscard]] size_t getFinalFrame() const {
+        auto sd9_info = this->sd9.getSD9Info();
+
+        return sd9_info.isLooping()
+                   ? sd9_info.loop_end_byte_offset / SD9_SAMPLE_SIZE
+                   : this->total_frames;
+    }
 };
 
 class AudioHandler {

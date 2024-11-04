@@ -24,5 +24,5 @@ class ModObserver {
    private:
     virtual void onModChanged(const Mod& mod) {};
     virtual void onSelectedPathChanged(const PathChangedData& data) {};
-    virtual void onOverrideUpdated(const Override* override) {};
+    virtual void onOverrideUpdated(Override* override) {};
 };

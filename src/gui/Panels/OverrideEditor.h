@@ -15,6 +15,8 @@ class OverrideEditor : public wxBoxSizer, public ModObserver {
         this->update();
     };
 
+    void onOverrideUpdated(Override* /*unused*/) override { this->update(); }
+
     void update() { this->update(this->GetContainingWindow()); }
     void update(wxWindow* parent);
 };
