@@ -1,7 +1,6 @@
 
 #include "VolumeControl.h"
 #include <wx/event.h>
-#include <wx/gtk/slider.h>
 #include <wx/sizer.h>
 #include "audio/AudioHandler.h"
 
