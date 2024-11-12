@@ -4,7 +4,6 @@
 
 #include <cmath>
 #include <complex>
-#include <string>
 #include <vector>
 
 using SampleType = float;
@@ -12,6 +11,8 @@ using SampleList = std::vector<SampleType>;
 
 using FFT_T = std::complex<SampleType>;
 using FFTBinList = std::vector<FFT_T>;
+
+using volume_t = float;
 
 struct StreamDetails {
     std::istream* stream = nullptr;

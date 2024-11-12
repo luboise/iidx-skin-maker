@@ -1,10 +1,9 @@
 #pragma once
 
 #include <map>
-#include <memory>
 #include "Overrides/Override.h"
 
-#define CURRENT_GAME_VERSION 31
+constexpr auto CURRENT_GAME_VERSION = 31;
 
 struct Mod {
     std::string name = "My Mod";

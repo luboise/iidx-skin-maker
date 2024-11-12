@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <utility>
 #include "audio/SD9File.h"
 #include "mod_manager/Mod.h"
@@ -10,20 +11,20 @@
 using std::string;
 
 SD9Override::SD9Override(fs::path in, SD9Info info) : Override(std::move(in)) {
-    _replacementData.info = info;
+    _replacementData.base_info = info;
 }
 
 SD9Override::SD9Override(fs::path in) : Override(std::move(in)) {
     fs::path root_path = ModManager::getInstance().getRootPath();
     auto sd9 = SD9File(root_path / proximatePath());
 
-    _replacementData.info = sd9.getSD9Info();
+    _replacementData.base_info = sd9.getSD9Info();
 }
 
 std::string SD9Override::serialiseData() {
     std::array<char, SD9_HEADER_SIZE> sd9_data{};
 
-    memcpy(sd9_data.data(), &_replacementData.info, SD9_HEADER_SIZE);
+    memcpy(sd9_data.data(), &_replacementData.base_info, SD9_HEADER_SIZE);
 
     std::stringstream ss;
     ss << _replacementData.path.string() << OVERRIDE_SEP_CHAR
@@ -40,18 +41,48 @@ void SD9Override::process(const ProcessData& process_data) {
         return;
     }
 
+    // Export the wav file
     fs::path out_fs_path = process_data.out_root / _proximatePath;
-
     fs::create_directories(out_fs_path.parent_path());
+    _replacementData.new_audio->exportToFile(out_fs_path);
 
-    _replacementData.audio->exportToFile(out_fs_path);
-
+    // Read the wav file
     std::string data = FileHandler::Read(out_fs_path);
-
     std::ofstream ofs(out_fs_path);
 
-    ofs.write((char*)(&_replacementData.info), sizeof(_replacementData.info));
-    ofs.write(data.data(), data.size());
+    // Update the SD9 Override Info
+    SD9Info final_info = this->getSD9InfoOverride();
+
+    final_info.audio_size = FileHandler::GetFileSize(out_fs_path);
+
+    // Write the SD9 header
+
+    ofs.write(reinterpret_cast<char*>(&final_info),
+              sizeof(_replacementData.base_info));
+    ofs.write(data.data(), static_cast<std::streamsize>(data.size()));
 
     ofs.close();
 }
+
+SD9Info SD9Override::getSD9InfoOverride() const {
+    SD9Info out_info = _replacementData.base_info;
+
+#define COPY_IF_VAL(VAL)                                        \
+    {                                                           \
+        auto& value = this->_replacementData.override_info.VAL; \
+        if (value.has_value()) {                                \
+            out_info.VAL = value.value();                       \
+        }                                                       \
+    }
+
+    COPY_IF_VAL(header);
+    COPY_IF_VAL(header_size);
+    COPY_IF_VAL(volume);
+    COPY_IF_VAL(fluff3);
+    COPY_IF_VAL(loop_start_byte_offset);
+    COPY_IF_VAL(loop_end_byte_offset);
+    COPY_IF_VAL(fluff4);
+    COPY_IF_VAL(unique_index);
+
+    return out_info;
+};

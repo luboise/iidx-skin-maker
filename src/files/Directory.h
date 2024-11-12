@@ -5,7 +5,7 @@
 
 class Directory {
    public:
-    explicit Directory(fs::path path);
+    explicit Directory(const fs::path& path);
 
     void addFile(const fs::path& path);
     void addSubdir(Directory&& dir) { this->_subdirs.push_back(dir); }

@@ -1,12 +1,10 @@
 #include "Directory.h"
+#include <algorithm>
 
 #include "utils.h"
 
-Directory::Directory(fs::path path) {
-    this->_path = path;
-    this->_files = {};
-    this->_subdirs = {};
-
+Directory::Directory(const fs::path& path)
+    : _path(path), _files({}), _subdirs({}) {
     if (!fs::exists(path)) {
         throw std::invalid_argument("Bad path used: " + path.string());
     }
@@ -38,10 +36,11 @@ void Directory::addFile(const fs::path& path) { this->_files.push_back(path); }
 
 bool Directory::isEmptyRecursive(bool check_file_extensions) const {
     if (check_file_extensions) {
-        for (const fs::path& file : this->_files) {
-            if (Utils::File::IsSupported(file)) {
-                return false;
-            }
+        if (std::ranges::any_of(_files.begin(), _files.end(),
+                                [](const auto& file) {
+                                    return Utils::File::IsSupported(file);
+                                })) {
+            return false;
         }
     } else {
         if (_files.size() > 0) {
@@ -49,11 +48,10 @@ bool Directory::isEmptyRecursive(bool check_file_extensions) const {
         }
     }
 
-    for (const Directory& subdir : _subdirs) {
-        if (!subdir.isEmptyRecursive(check_file_extensions)) {
-            return false;
-        }
-    }
-
-    return true;
+    // Check if all of the subdirs are empty
+    return std::ranges::all_of(
+        _subdirs.begin(), _subdirs.end(),
+        [check_file_extensions](const auto& subdir) {
+            return subdir.isEmptyRecursive(check_file_extensions);
+        });
 };

@@ -1,6 +1,5 @@
 #include <doctest/doctest.h>
 #include "audio/SD9File.h"
-#include "mod_manager/Mod.h"
 
 TEST_CASE("SD9Info Tests") {
     SUBCASE("Reading SD9Info from binary") {

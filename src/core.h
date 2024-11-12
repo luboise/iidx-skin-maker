@@ -1,3 +1,5 @@
+#pragma once
+
 constexpr auto MOD_FILE_EXTENSION = "2dxmod";
 
 enum ALERT_TYPE {

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <istream>
 namespace Utils {
 
     fs::path filePopup(const wxString& text, const wxString& filetype);
@@ -13,13 +12,6 @@ namespace Utils {
     namespace File {
         bool IsSupported(const fs::path&);
     }
-
-    namespace Stream {
-        template <typename T>
-        T parseLittleEndian(std::istream& stream) {
-            size_t size = sizeof(T);
-        };
-    }  // namespace Stream
 
     namespace Dialog {
         void Error(const wxString& message);

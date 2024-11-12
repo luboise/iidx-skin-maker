@@ -16,6 +16,7 @@ file(GLOB TestSources ${CMAKE_CURRENT_SOURCE_DIR}/test*.cpp)
 # ${SRC_DIR}/../audio/SoundFile.cpp ${SRC_DIR}/../utils.cpp)
 
 target_sources(Tests PRIVATE ${SkinMakerSources} ${TestSources})
+target_sources(Tests PRIVATE ${SRC_DIR}/gui/Panels/OverrideEditor.cpp)
 
 target_include_directories(Tests PRIVATE ${SRC_DIR})
 target_link_libraries(Tests PRIVATE ${WX_IMPORTS} ${PORTAUDIO_IMPORTS}

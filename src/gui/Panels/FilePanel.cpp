@@ -4,6 +4,7 @@
 #include <wx/msgdlg.h>
 #include <wx/treebase.h>
 
+#include <algorithm>
 #include <utility>
 
 #include "audio/AudioHandler.h"
@@ -15,15 +16,17 @@
 #include "gui/MainFrame.h"
 
 FilePanel::FilePanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
-    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* sizer{new wxBoxSizer(wxVERTICAL)};
 
     // Volume control here
-    sizer->Add(new VolumeControl(this));
+    auto* volume_control{new VolumeControl(this)};
+    sizer->Add(volume_control);
 
     // wxButton* add_entity_button = new wxButton(this, ID_ADD_ENTITY, "+");
 
-    this->_treeWidget = new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
-                                       wxSize(150, 500), wxTR_DEFAULT_STYLE);
+    auto* tree_widget{new wxTreeCtrl(this, wxID_ANY, wxPoint(200, 200),
+                                     wxSize(150, 500), wxTR_DEFAULT_STYLE)};
+    this->_treeWidget = tree_widget;
     // sizer->Add(add_entity_button);
     sizer->Add(_treeWidget, 0, wxEXPAND | wxALL);
 
@@ -127,9 +130,9 @@ void FilePanel::rebuildTree() {
     try {
         auto root_dir = ModManager::getInstance().getRootDir();
 
-        auto rootID = this->_treeWidget->AddRoot(
-            root_dir.getName(), -1, -1,
-            new ContentsTreeItemData(root_dir.getPath()));
+        auto* new_tree_item{new ContentsTreeItemData(root_dir.getPath())};
+        auto rootID = this->_treeWidget->AddRoot(root_dir.getName(), -1, -1,
+                                                 new_tree_item);
 
         rebuildTreeRec(rootID, root_dir);
     } catch (std::exception e) {
@@ -139,7 +142,7 @@ void FilePanel::rebuildTree() {
 
 void FilePanel::rebuildTreeRec(const wxTreeItemId& currentNodeID,
                                const Directory& currentDir) {
-    size_t supported_files = 0;
+    size_t supported_files{0};
 
     // Check everything in the current directory
     for (const auto& file : currentDir.getFiles()) {
@@ -151,17 +154,22 @@ void FilePanel::rebuildTreeRec(const wxTreeItemId& currentNodeID,
         }
         supported_files++;
 
+        auto* new_tree_item{new ContentsTreeItemData(file)};
         this->_treeWidget->AppendItem(currentNodeID, file.filename().string(),
-                                      -1, -1, new ContentsTreeItemData(file));
+                                      -1, -1, new_tree_item);
     }
 
-    for (const Directory& dir : currentDir.getDirs()) {
+    const std::list<Directory>& directories{currentDir.getDirs()};
+
+    std::ranges::for_each(directories, [this, currentNodeID](const auto& dir) {
         // std::cout << dir->getPath() << std::endl;
+
+        auto* tree_item_data{new ContentsTreeItemData(dir.getPath())};
+
         auto newNodeID = this->_treeWidget->AppendItem(
-            currentNodeID, dir.getName(), -1, -1,
-            new ContentsTreeItemData(dir.getPath()));
+            currentNodeID, dir.getName(), -1, -1, tree_item_data);
         rebuildTreeRec(newNodeID, dir);
-    }
+    });
 }
 
 void FilePanel::resetContentsTree() {
@@ -180,7 +188,7 @@ void FilePanel::resetContentsTree() {
     _treeWidget->DeleteAllItems();
 }
 
-void FilePanel::onModChanged(const Mod&) {
+void FilePanel::onModChanged(const Mod& /*mod*/) {
     this->rebuildTree();
     this->_treeWidget->ExpandAll();
 };

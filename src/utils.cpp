@@ -41,8 +41,8 @@ fs::path Utils::saveFilePopup(const wxString& extension) {
 
 bool Utils::booleanPopup(const wxString& message, const wxString& true_option,
                          const wxString& false_option) {
-    auto* popup = new wxMessageDialog(nullptr, message, "CAPTION",
-                                      wxYES_NO | wxICON_QUESTION);
+    auto* popup{new wxMessageDialog(nullptr, message, "CAPTION",
+                                    wxYES_NO | wxICON_QUESTION)};
 
     return popup->ShowModal() == wxID_YES;
 };

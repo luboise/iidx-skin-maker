@@ -8,7 +8,7 @@
 
 class FilePanel : public wxPanel, public ModObserver {
    public:
-    FilePanel(wxWindow* parent);
+    explicit FilePanel(wxWindow* parent);
     void changeContentsDirectory(const fs::path& newDir);
 
    private:
@@ -26,7 +26,7 @@ class FilePanel : public wxPanel, public ModObserver {
 
     void remakeTree();
 
-    virtual void onModChanged(const Mod&) override;
+    void onModChanged(const Mod& mod) override;
 
     wxTreeCtrl* _treeWidget = nullptr;
 

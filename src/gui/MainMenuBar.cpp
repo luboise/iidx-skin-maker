@@ -10,10 +10,10 @@
 
 enum { ID_CHANGE_CONTENTS = wxID_LOWEST - 10, ID_EXPORT_MOD };
 
-MainMenuBar::MainMenuBar(wxWindow* parent) : wxMenuBar() {
-    auto& mod_manager = ModManager::getInstance();
+MainMenuBar::MainMenuBar(wxWindow* parent) {
+    // auto& mod_manager{ModManager::getInstance()};
 
-    wxMenu* fileMenu = new wxMenu();
+    auto* fileMenu{new wxMenu()};
 
     fileMenu->Append(wxID_NEW, "New Mod");
     // fileMenu->Bind(wxID_NEW, [&mod_manager]() { mod_manager.newMod(); });
@@ -30,7 +30,7 @@ MainMenuBar::MainMenuBar(wxWindow* parent) : wxMenuBar() {
 
     this->Append(fileMenu, "&File");
 
-    wxMenu* modMenu = new wxMenu();
+    auto* modMenu{new wxMenu()};
     modMenu->Append(ID_CHANGE_CONTENTS, "Change Contents Folder");
     this->Append(modMenu, "&Mod");
 
@@ -50,7 +50,7 @@ MainMenuBar::MainMenuBar(wxWindow* parent) : wxMenuBar() {
             edit_contents_id);
             */
 
-    wxMenu* helpMenu = new wxMenu();
+    auto* helpMenu{new wxMenu()};
     helpMenu->Append(wxID_ABOUT, "About");
 
     this->Append(helpMenu, "&Help");

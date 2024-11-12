@@ -1,39 +1,42 @@
 #include "ModLoopChanger.h"
 
-#include <wx/event.h>
-#include <wx/font.h>
-#include <wx/gdicmn.h>
-#include <wx/layout.h>
-#include <wx/sizer.h>
-
 #include "audio/SD9File.h"
-#include "gui/Forms/NumberCallbackBox.h"
-#include "gui/Forms/TextCallbackBox.h"
+#include "gui/Forms/CallbackBoxes/NumberOverrideBox.h"
 
 enum {
     MOD_NAME = wxID_HIGHEST + 1,
 };
 
-ModLoopChanger::ModLoopChanger(wxWindow* parent, SD9Info* info)
-    : wxBoxSizer(wxVERTICAL), _info(info) {
-    auto* enabled_sizer = new wxBoxSizer(wxHORIZONTAL);
-    enabled_sizer->Add(new wxStaticText(parent, wxID_ANY, "Loop Enabled"));
+ModLoopChanger::ModLoopChanger(wxWindow* parent, const SD9Info& base_info,
+                               SD9InfoOverride& override_info)
+    : wxBoxSizer(wxVERTICAL), _info(base_info) {
+    auto* enabled_sizer{new wxBoxSizer(wxHORIZONTAL)};
+
+    auto* enabled_label{new wxStaticText(parent, wxID_ANY, "Loop Enabled")};
+    enabled_sizer->Add(enabled_label);
+
     enabled_sizer->AddStretchSpacer();
 
-    _enabledCheckbox = new wxCheckBox(parent, wxID_ANY, "");
-    _enabledCheckbox->SetValue(info->loop_enabled != 0);
+    auto* new_checkbox{new wxCheckBox(parent, wxID_ANY, "")};
+    _enabledCheckbox = new_checkbox;
+
+    _enabledCheckbox->SetValue(base_info.loop_enabled != 0);
 
     enabled_sizer->Add(_enabledCheckbox);
 
-    auto* loop_start_sizer = new NumberCallbackBox(parent, "Loop Start",
-                                                   info->loop_start_byte_offset,
-                                                   0, info->audio_size);
-    auto* loop_end_sizer =
-        new NumberCallbackBox(parent, "Loop End", info->loop_end_byte_offset);
+    wxSizer* loop_start_sizer{new NumberOverrideBox(
+        parent, "Loop Start", _info.loop_start_byte_offset,
+        override_info.loop_start_byte_offset)};
+
+    wxSizer* loop_end_sizer{
+        new NumberOverrideBox(parent, "Loop Start", _info.loop_end_byte_offset,
+                              override_info.loop_end_byte_offset)};
+
+    // 0, info->audio_size);   // Bounds of number callback box ,implement later
 
     constexpr auto PADDING_SIZE = 10;
 
-    auto flags = wxSizerFlags().Expand().Border(wxALL, 10).GetFlags();
+    auto flags = wxSizerFlags().Expand().Border(wxALL, PADDING_SIZE).GetFlags();
 
     this->Add(enabled_sizer, 1, flags, PADDING_SIZE);
     this->Add(loop_start_sizer, 1, flags, PADDING_SIZE);

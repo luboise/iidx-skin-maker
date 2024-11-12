@@ -36,5 +36,5 @@ class Override {
     // The path of the file to be overridden
     fs::path _proximatePath = "";
 
-    std::string _out = "";
+    std::string _out;
 };

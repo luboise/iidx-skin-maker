@@ -4,11 +4,11 @@
 
 class ModSettingsPopup : public wxDialog {
    public:
-	ModSettingsPopup(Mod& mod);
+    explicit ModSettingsPopup(Mod& mod);
 
    private:
-	void onOpenNewDataDir(wxCommandEvent&);
-	Mod& _mod;
+    void onOpenNewDataDir(wxCommandEvent&);
+    Mod& _mod;
 
-	wxTextCtrl* _dataDirPreview = nullptr;
+    wxTextCtrl* _dataDirPreview = nullptr;
 };

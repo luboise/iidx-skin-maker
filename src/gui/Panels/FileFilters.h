@@ -5,7 +5,7 @@
 
 class FileFilters : public wxPanel {
    public:
-    FileFilters(wxWindow* parent);
+    explicit FileFilters(wxWindow* parent);
 
    private:
     void OnButtonClick(wxCommandEvent& event);

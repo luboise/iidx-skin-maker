@@ -4,13 +4,23 @@
 #include <wx/sizer.h>
 #include "audio/AudioHandler.h"
 
-VolumeControl::VolumeControl(wxWindow* parent) : wxBoxSizer(wxHORIZONTAL) {
-    this->Add(new wxStaticText(parent, wxID_ANY, "Volume"));
+using volume_control_t = uint8_t;
 
-    auto* slider = new wxSlider{parent, wxID_ANY, 100, 0, 100};
+constexpr volume_control_t MIN_VOLUME = 0;
+constexpr volume_control_t MAX_VOLUME = 100;
+
+VolumeControl::VolumeControl(wxWindow* parent) : wxBoxSizer(wxHORIZONTAL) {
+    auto* volume_label{new wxStaticText(parent, wxID_ANY, "Volume")};
+    this->Add(volume_label);
+
+    volume_t starting_volume_ratio = AudioHandler::GetVolume();
+    auto starting_volume =
+        static_cast<volume_control_t>(starting_volume_ratio * MAX_VOLUME);
+    auto* slider{new wxSlider{parent, wxID_ANY, starting_volume, MIN_VOLUME,
+                              MAX_VOLUME}};
 
     slider->Bind(wxEVT_SLIDER, [](wxCommandEvent& event) {
-        AudioHandler::SetVolume(event.GetInt());
+        AudioHandler::SetVolume(((float)event.GetInt()) / MAX_VOLUME);
     });
 
     auto* stop_button = new wxButton(parent, wxID_ANY, "Stop");

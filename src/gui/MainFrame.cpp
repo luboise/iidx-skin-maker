@@ -1,21 +1,40 @@
 #include "MainFrame.h"
 
 #include <portaudio.h>
+#include <wx/sizer.h>
 #include <wx/splitter.h>
+#include <memory>
 
 #include "gui/MainMenuBar.h"
-#include "gui/Panels/EditPanel.h"
+#include "gui/Panels/FileDetailsPanel.h"
 #include "gui/Panels/FilePanel.h"
+#include "gui/Panels/OverrideEditor.h"
 
 MainFrame::MainFrame(wxWindow* parent)
     : wxFrame(nullptr, wxID_ANY, "Hello World") {
     // auto* sizer = new wxBoxSizer(wxHORIZONTAL);
     auto* splitter = new wxSplitterWindow(this, wxID_ANY);
 
-    _fileSection = new FilePanel(splitter);
-    _editSection = new EditPanel(splitter);
+    // LEFT half
+    auto* new_file_panel{new FilePanel(splitter)};
+    _fileSection = new_file_panel;
 
-    splitter->SplitVertically(_fileSection, _editSection);
+    // RIGHT half
+
+    wxPanel* editing_panel{new wxPanel(splitter)};
+    _editingPanel = editing_panel;
+
+    wxBoxSizer* editing_sizer{new wxBoxSizer(wxVERTICAL)};
+
+    _editingPanel->SetSizer(editing_sizer);
+
+    _fileDetailsSizer = std::make_unique<FileDetailsPanel>(editing_panel);
+    editing_sizer->Add(_fileDetailsSizer.get(), 1, wxEXPAND | wxALL, 0);
+
+    auto* override_editor{new OverrideEditor(this)};
+    editing_sizer->Add(override_editor);
+
+    splitter->SplitVertically(_fileSection, editing_panel);
     splitter->SetMinimumPaneSize(200);
     splitter->SetSashPosition(400);
 
@@ -25,11 +44,22 @@ MainFrame::MainFrame(wxWindow* parent)
 
     // this->SetSizer(sizer);
 
+    auto* main_sizer{new wxBoxSizer(wxHORIZONTAL)};
+    main_sizer->Add(splitter, 1, wxEXPAND | wxALL, 0);
+    this->SetSizer(main_sizer);
+
     this->CreateStatusBar();
-    this->SetMenuBar(new MainMenuBar(this));
+
+    auto* new_main_menu{new MainMenuBar(this)};
+    this->SetMenuBar(new_main_menu);
 
     // Finalise layout and then change the contents dir
     // _fileSection->ChangeContentsDirectory("/home/lucas/desktop/2dx_fake");
+}
+
+void MainFrame::OnExit(wxCommandEvent& event) {
+    Pa_Terminate();
+    Close(true);
 }
 
 /*
@@ -71,16 +101,10 @@ ChangeContentsDirectory("/home/luboise/iidx-skin-maker/test/contents/data");
 }
 */
 
-void MainFrame::OnExit(wxCommandEvent& event) {
-    Pa_Terminate();
-    Close(true);
-}
-
-void MainFrame::OnAbout(wxCommandEvent& event) {
-    wxMessageBox("This is a wxWidgets Hello World example", "About Hello World",
-                 wxOK | wxICON_INFORMATION);
-}
-
-void MainFrame::OnHello(wxCommandEvent& event) {
-    wxLogMessage("Hello world from wxWidgets!");
-}
+/*
+void MainFrame::onOverrideUpdated(Override* override) {
+    if (_overrideEditor == nullptr) {
+        this->updateOverrideEditor(override);
+    }
+};
+*/

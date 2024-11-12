@@ -15,7 +15,7 @@ ModManager* ModManager::_singleton = nullptr;
 
 bool ModManager::changeContentsDirectory(const fs::path& newDir) {
     try {
-        auto* dir = new Directory(newDir);
+        auto* dir{new Directory(newDir)};
         if (_rootDir != nullptr) {
             delete _rootDir;
             _rootDir = nullptr;
@@ -46,7 +46,7 @@ void ModManager::newMod() {
 
     auto new_mod = Mod();
 
-    auto* dialog = new ModSettingsPopup(new_mod);
+    auto* dialog{new ModSettingsPopup(new_mod)};
     dialog->ShowModal();
 
     if (!fs::exists(new_mod.root_dir)) {
@@ -83,8 +83,7 @@ void ModManager::alertObservers(ALERT_TYPE type) {
         }
     } else if (type == ALERT_TYPE::OVERRIDE_UPDATED) {
         for (auto* observer : _observers) {
-            // TODO: Implement this
-            // observer->onOverrideUpdated(_selectedPath);
+            observer->onOverrideUpdated(_mostRecentOverride);
         }
     } else {
         std::cerr << "Invalid alert type encountered in alertObservers: "
@@ -157,6 +156,8 @@ void ModManager::selectPath(fs::path& path) {
     }
 
     _selectedPath = path.lexically_proximate(this->getRootPath());
+    _mostRecentOverride = _currentMod.getOverride(_selectedPath);
+
     alertObservers(ALERT_TYPE::SELECTED_PATH_CHANGED);
 
     /*
@@ -195,7 +196,7 @@ bool ModManager::exportMod(const fs::path& path) const {
     return true;
 };
 
-void ModManager::Export(const Mod& mod, fs::path out_parent_folder) {
+void ModManager::Export(const Mod& mod, const fs::path& out_parent_folder) {
     if (!fs::exists(out_parent_folder)) {
         throw std::runtime_error("Unable to export to non-existant folder at " +
                                  out_parent_folder.string());

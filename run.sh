@@ -7,6 +7,6 @@ cd $BUILD_FOLDER &&
 cmake .. && 
 cd ../ &&
 cmake --build $BUILD_FOLDER --config Debug -- -j 10 && 
-cd ./bin/Linux/
+cd ./bin/Linux/ &&
 ./Tests && 
 ./iidx-skin-maker 

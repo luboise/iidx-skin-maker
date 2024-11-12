@@ -16,7 +16,7 @@ class ModManager {
 
     bool loadMod(const fs::path&);
 
-    bool saveMod(const Mod&, const fs::path&);
+    static bool saveMod(const Mod&, const fs::path&);
     bool saveMod() { return saveMod(_currentMod, _modLocation); };
 
     void editModSettings();
@@ -32,15 +32,21 @@ class ModManager {
         return _currentMod.getOverride(path);
     }
 
+    [[nodiscard]] Override* getMostRecentOverride() const {
+        return _mostRecentOverride;
+    };
+
     void addOverride(Override* override) {
         fs::path in_path = override->proximatePath();
         _currentMod.setOverride(in_path, override);
+        _mostRecentOverride = override;
 
         alertObservers(ALERT_TYPE::OVERRIDE_UPDATED);
     }
 
     void removeOverride(Override* override) {
         _currentMod.removeOverride(override);
+        _mostRecentOverride = nullptr;
 
         alertObservers(ALERT_TYPE::OVERRIDE_UPDATED);
     }
@@ -51,11 +57,12 @@ class ModManager {
 
     [[nodiscard]] bool exportMod(const fs::path&) const;
 
-    static void Export(const Mod&, fs::path out_parent_folder);
+    static void Export(const Mod&, const fs::path& out_parent_folder);
 
     static ModManager& getInstance() {
         if (_singleton == nullptr) {
-            _singleton = new ModManager();
+            auto* mod_manager{new ModManager()};
+            _singleton = mod_manager;
         }
 
         return *_singleton;
@@ -93,4 +100,6 @@ class ModManager {
     std::string _currentContentsDirectory;
 
     std::set<ModObserver*> _observers;
+
+    Override* _mostRecentOverride{nullptr};
 };

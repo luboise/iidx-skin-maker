@@ -1,9 +1,84 @@
 #include "OverrideEditor.h"
+#include "gui/Forms/CallbackBoxes/NumberOverrideBox.h"
+#include "mod_manager/Overrides/SD9Override.h"
+
+#include "gui/Forms/ModLoopChanger.h"
+
+#include "utils.h"
+
+void OverrideEditor::onOverrideUpdated(Override* override) {
+    this->setOverride(override);
+};
+
+void OverrideEditor::onSelectedPathChanged(const PathChangedData& data) {
+    this->setOverride(data.override);
+};
+
+void OverrideEditor::setOverride(Override* override) {
+    this->Clear(true);
+
+    this->currentOverride_ = override;
+
+    if (override == nullptr) {
+        this->Layout();
+        return;
+    }
+
+    auto override_type{override->getType()};
+    if (override_type == SD9_TYPE) {
+        auto* casted_override{dynamic_cast<SD9Override*>(override)};
+
+        this->edit(*casted_override);
+    } else {
+        Utils::Dialog::Error(
+            "Invalid override type encountered in OverrideEditor: " +
+            override_type);
+        return;
+    }
+
+    this->GetContainingWindow()->Layout();
+    // this->Layout();
+};
+
+void OverrideEditor::edit(SD9Override& override) {
+    const SD9Replacement& override_data{override.getOverrideData()};
+    SD9InfoOverride& overrideables{override.getOverrideList()};
+
+    const SD9Info& base_info = override_data.base_info;
+
+    auto* parent{this->GetContainingWindow()};
+
+    // 'Replaced by' label
+    auto* temp_sizer{new wxBoxSizer(wxHORIZONTAL)};
+    auto* temp_sizer_label{new wxStaticText(
+        parent, wxID_ANY,
+        "Replaced by " + override.getReplacementFilepath().string())};
+    temp_sizer->Add(temp_sizer_label);
+
+    wxSizer* audio_index{new NumberOverrideBox(parent, "Audio Index",
+                                               base_info.unique_index,
+                                               overrideables.unique_index)};
+
+    auto* loop_changer{new ModLoopChanger(parent, base_info, overrideables)};
+    this->Add(loop_changer);
+
+    /*
+auto* audio_index_ctrl{
+    new wxTextCtrl(parent, wxID_ANY, std::to_string(base_info.unique_index),
+                   wxDefaultPosition, wxDefaultSize, wxTE_READONLY)};
+
+audio_index_ctrl->SetBackgroundColour(*wxLIGHT_GREY);
+audio_index->Add(audio_index_ctrl);
+    */
+
+    this->Add(temp_sizer);
+    this->Add(audio_index);
+};
+
+/*
 #include <filesystem>
 
-#include "audio/AudioHandler.h"
 #include "gui/Forms/ModLoopChanger.h"
-#include "mod_manager/Overrides/SD9Override.h"
 
 #include "utils.h"
 
@@ -23,67 +98,30 @@ void OverrideEditor::update(wxWindow* parent) {
     }
 
     if (full_path.extension() == SUPPORTED_FILE_EXTENSIONS::SD9) {
-        SD9File* audio_file = nullptr;
-
-        try {
-            ifstream ifs(full_path);
-            audio_file = new SD9File(ifs);
-            if (audio_file == nullptr) {
-                throw std::logic_error(
-                    "Initialised audio_file pointer is equal to nullptr.");
-            }
-        } catch (std::exception& e) {
-            Utils::Dialog::Error("Unable to read SD9 file " +
-                                 full_path.string() + ".\nError: " + e.what());
-            return;
+        if (parent != nullptr) {
+            parent->Layout();
         }
-
-        SD9Info info = audio_file->getSD9Info();
-
-        // TODO: Move this somewhere else
-        auto* preview_audio_button = new wxButton(parent, wxID_ANY, "Preview");
-        preview_audio_button->Bind(
-            wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent&) {
-                try {
-                    AudioHandler::PlaySD9(_data.get_full_path());
-                } catch (std::exception& e) {
-                    Utils::Dialog::Error("Unable to preview SD9 file " +
-                                         _data.get_full_path().string() +
-                                         ".\nError: " + e.what());
-                }
-            });
-        this->Add(preview_audio_button);
-
-        Override* override = _data.override;
-        if (override != nullptr) {
-            auto* dnc = (SD9Override*)(override);
-            fs::path replacement_filepath = dnc->getReplacementFilepath();
-
-            auto* temp_sizer = new wxBoxSizer(wxHORIZONTAL);
-            temp_sizer->Add(new wxStaticText(
-                parent, wxID_ANY,
-                "Replaced by " + replacement_filepath.string()));
-
-            this->Add(temp_sizer);
-        }
-
-        auto* audio_index = new wxBoxSizer(wxHORIZONTAL);
-        audio_index->Add(new wxStaticText(parent, wxID_ANY, "Audio Index"));
-        audio_index->AddStretchSpacer();
-        auto* audio_index_ctrl =
-            new wxTextCtrl(parent, wxID_ANY, std::to_string(info.unique_index),
-                           wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-        audio_index_ctrl->SetBackgroundColour(*wxLIGHT_GREY);
-        audio_index->Add(audio_index_ctrl);
-
-        this->Add(audio_index);
-
-        auto* loop_sizer = new ModLoopChanger(parent, &info);
-
-        this->Add(loop_sizer);
-    }
-
-    if (parent != nullptr) {
-        parent->Layout();
     }
 }
+*/
+
+// SD9InfoOverride& info_override{override->getOverrideInfo()};
+//_infoOverride = &info_override;
+
+/*
+try {
+ifstream ifs(full_path);
+auto* read_file{new SD9File(ifs)};
+
+audio_file = read_file;
+} catch (std::exception& e) {
+Utils::Dialog::Error("Unable to read SD9 file " + full_path.string() +
+                     ".\nError: " + e.what());
+return;
+}
+
+if (audio_file == nullptr) {
+throw std::logic_error(
+    "Initialised audio_file pointer is equal to nullptr.");
+}
+*/

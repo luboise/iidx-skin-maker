@@ -6,8 +6,8 @@
 #include <wx/layout.h>
 #include <wx/sizer.h>
 
+#include "gui/Forms/CallbackBoxes/TextEditBox.h"
 #include "gui/Forms/NumberCallbackBox.h"
-#include "gui/Forms/TextCallbackBox.h"
 #include "utils.h"
 
 enum {
@@ -15,9 +15,9 @@ enum {
 };
 
 ModSettingsPopup::ModSettingsPopup(Mod& mod)
-    : _mod(mod),
-      wxDialog(nullptr, wxID_ANY, "Mod Settings", wxDefaultPosition,
-               wxDefaultSize) {
+    : wxDialog(nullptr, wxID_ANY, "Mod Settings", wxDefaultPosition,
+               wxDefaultSize),
+      _mod(mod) {
     /*
     auto name_callback = [&mod](wxCommandEvent& event) {
             mod.name = event.GetString();
@@ -26,16 +26,17 @@ ModSettingsPopup::ModSettingsPopup(Mod& mod)
 
     // Contents sizer
 
-    auto* data_sizer = new wxBoxSizer(wxHORIZONTAL);
+    auto* data_sizer{new wxBoxSizer(wxHORIZONTAL)};
 
     auto* dp_label = new wxStaticText(this, wxID_ANY, "Data path");
     data_sizer->Add(dp_label, 0);
 
     data_sizer->AddStretchSpacer();
 
-    _dataDirPreview =
-        new wxTextCtrl(this, MOD_NAME, mod.root_dir.string(), wxDefaultPosition,
-                       wxDefaultSize, wxTE_READONLY);
+    auto* new_preview{new wxTextCtrl(this, MOD_NAME, mod.root_dir.string(),
+                                     wxDefaultPosition, wxDefaultSize,
+                                     wxTE_READONLY)};
+    _dataDirPreview = new_preview;
     data_sizer->Add(_dataDirPreview, 3);
 
     auto* dp_button = new wxButton(this, MOD_NAME, "..");
@@ -51,21 +52,21 @@ ModSettingsPopup::ModSettingsPopup(Mod& mod)
 
     // All other sizers
 
-    auto* name_sizer = new TextCallbackBox(this, "Mod Name", mod.name);
+    wxSizer* name_sizer{new TextEditBox(this, "Mod Name", mod.name)};
 
-    auto* game_version =
-        new NumberCallbackBox(this, "Game Version", mod.game_version);
+    wxSizer* game_version =
+        new NumberEditBox(this, "Game Version", mod.game_version);
 
-    auto* version_major =
-        new NumberCallbackBox(this, "Version Major", mod.version_major);
-    auto* version_minor =
-        new NumberCallbackBox(this, "Version Minor", mod.version_minor);
+    wxSizer* version_major =
+        new NumberEditBox(this, "Version Major", mod.version_major);
+    wxSizer* version_minor =
+        new NumberEditBox(this, "Version Minor", mod.version_minor);
 
     auto* create_button = new wxButton(this, wxID_ADD, "Create Mod");
     create_button->Bind(wxEVT_COMMAND_BUTTON_CLICKED,
                         [this](wxCommandEvent&) { this->Close(); });
 
-    auto* main_sizer = new wxBoxSizer(wxVERTICAL);
+    auto* main_sizer{new wxBoxSizer(wxVERTICAL)};
     main_sizer->SetMinSize(wxSize(600, -1));
 
     constexpr auto PADDING_SIZE = 10;

@@ -1,4 +1,6 @@
 #include "FileHandler.h"
+#include "audio/AudioHandler.h"
+#include "utils.h"
 
 #include <filesystem>
 #include <fstream>
@@ -68,4 +70,53 @@ std::string FileHandler::Read(const fs::path& filepath) {
     ifs.close();
 
     return s;
+};
+
+size_t FileHandler::GetFileSize(const fs::path& path) {
+    std::ifstream ifs(path, std::ios::binary);
+
+    if (!ifs.is_open()) {
+        std::cerr << "Unable to read file " << path << ". Returning \"\""
+                  << std::endl;
+        return 0;
+    }
+
+    ifs.seekg(0, std::ios::end);
+    const size_t file_size = ifs.tellg();
+
+    ifs.close();
+
+    return file_size;
+};
+
+void FileHandler::Preview(const fs::path& path) {
+    if (!fs::exists(path) || !fs::is_regular_file(path)) {
+        std::cerr
+            << "File to be previewed does not exist or is otherwise invalid: "
+            << path << path << std::endl;
+        return;
+    }
+
+    if (!Utils::File::IsSupported(path)) {
+        std::cerr << "Unsupported file is not able to be previewed: " << path
+                  << std::endl;
+        return;
+    }
+
+    fs::path extension = path.extension();
+
+    if (extension == SUPPORTED_FILE_EXTENSIONS::SD9) {
+        try {
+            AudioHandler::PlaySD9(path);
+        } catch (std::exception& e) {
+            Utils::Dialog::Error("Unable to preview SD9 file " + path.string() +
+                                 ".\nError: " + e.what());
+        }
+
+    }
+
+    else {
+        std::cerr << "Unable to preview extension " << extension << std::endl;
+        return;
+    }
 };

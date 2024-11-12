@@ -1,9 +1,10 @@
 #include <sndfile.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
 
 #include <filesystem>
 #include <istream>
@@ -47,26 +48,26 @@ SoundFile::SoundFile(const fs::path& filepath) {
     sf_close(snd);
 }
 
-SoundFile::~SoundFile() {}
+SoundFile::~SoundFile() = default;
 
 sf_count_t read_callback(void* ptr, sf_count_t count, void* user_data) {
     // StreamDetails& details = *(StreamDetails*)user_data;
-    auto& stream = *((istream*)user_data);
+    auto& stream = *(static_cast<istream*>(user_data));
 
-    stream.read((char*)ptr, count);
+    stream.read(static_cast<char*>(ptr), count);
 
     return stream.gcount();
 }
 
 sf_count_t tell_callback(void* user_data) {
-    auto& stream = *((istream*)user_data);
+    auto& stream = *(static_cast<istream*>(user_data));
 
     return stream.tellg();
 }
 
 // Seek callback for libsndfile
 sf_count_t seek_callback(sf_count_t offset, int whence, void* user_data) {
-    auto& stream = *((istream*)user_data);
+    auto& stream = *(static_cast<istream*>(user_data));
 
     if (whence == SEEK_SET) {
         stream.seekg(offset, std::ios::beg);
@@ -80,7 +81,7 @@ sf_count_t seek_callback(sf_count_t offset, int whence, void* user_data) {
 }
 
 sf_count_t file_length_callback(void* user_data) {
-    auto& stream = *((istream*)user_data);
+    auto& stream = *(static_cast<istream*>(user_data));
 
     // Backup cursor
     const auto curr = stream.tellg();
@@ -259,7 +260,7 @@ SampleList SoundFile::getStretched(double stretchFactor, int32_t startFrame,
 
     int32_t out_frames = floor(frame_count / stretchFactor);
 
-    SampleList stretched(out_frames * _sndinfo.channels);
+    SampleList stretched(static_cast<size_t>(out_frames * _sndinfo.channels));
 
     uint32_t current_sample = 0;
     for (int frame = 0; frame < out_frames; frame++) {
@@ -355,11 +356,10 @@ std::vector<SampleList> SoundFile::getWindows(const SampleList& samples,
             SampleList window(samples.begin() + l_index, samples.end());
             windows.push_back(window);
             break;
-        } else {
-            SampleList window(samples.begin() + l_index,
-                              samples.begin() + r_index);
-            windows.push_back(window);
         }
+
+        SampleList window(samples.begin() + l_index, samples.begin() + r_index);
+        windows.push_back(window);
     }
 
     return windows;
@@ -415,7 +415,9 @@ void SoundFile::normalise() {
     for (auto& channel : _channels) {
         for (const auto& sample : channel) {
             auto newVal = abs(sample);
-            if (newVal > maxSample) maxSample = newVal;
+            if (newVal > maxSample) {
+                maxSample = newVal;
+            }
         }
     }
 

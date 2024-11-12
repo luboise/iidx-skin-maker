@@ -20,12 +20,10 @@ void SD9File::initialiseFrom(std::istream& ifs) {
     ifs.read(sd9_header.data(), sizeof(SD9Info));
     memcpy(&_sd9Header, sd9_header.data(), sizeof(SD9Info));
 
-    char* data = new char[size - SD9_HEADER_SIZE + 1];
-    ifs.read(data, size);
+    std::vector<char> data(size - SD9_HEADER_SIZE + 1);
+    ifs.read(data.data(), size);
 
-    SoundFile::parseAudioData(data, size);
-
-    delete data;
+    SoundFile::parseAudioData(data.data(), size);
 };
 
 /*

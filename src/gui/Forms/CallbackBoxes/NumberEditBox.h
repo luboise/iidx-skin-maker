@@ -1,13 +1,14 @@
-#include <wx/gdicmn.h>
-#include <wx/sizer.h>
+#pragma once
+
 #include <wx/spinctrl.h>
+#include <wx/valnum.h>
 
 using NumberCallback = std::function<void(wxString&)>;
 
 template <typename T>
 class NumberEditBox : public wxBoxSizer {
    public:
-    NumberEditBox(wxWindow* parent, std::string label_text, T& form_value,
+    NumberEditBox(wxWindow* parent, std::string label_text, const T& form_value,
                   int min_value = -1, int max_value = -1)
         : _value(form_value), wxBoxSizer(wxHORIZONTAL) {
         auto* label = new wxStaticText(parent, wxID_ANY, label_text);

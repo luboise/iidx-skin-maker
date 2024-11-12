@@ -9,15 +9,15 @@
 
 #include "Overrides/SD9Override.h"
 
-constexpr char SPLITTER_CHAR[] = " ";
+constexpr char SPLITTER_CHAR = ' ';
 
-constexpr char NAME[] = "mod_name";
-constexpr char GAME_VERSION[] = "game_version";
-constexpr char MOD_VERSION_MAJOR[] = "mod_version_major";
-constexpr char MOD_VERSION_MINOR[] = "mod_version_minor";
-constexpr char DATA_DIRECTORY[] = "data_root_dir";
+constexpr std::string_view NAME = "mod_name";
+constexpr std::string_view GAME_VERSION = "game_version";
+constexpr std::string_view MOD_VERSION_MAJOR = "mod_version_major";
+constexpr std::string_view MOD_VERSION_MINOR = "mod_version_minor";
+constexpr std::string_view DATA_DIRECTORY = "data_root_dir";
 
-constexpr char OVERRIDES_BEGIN[] = "BEGIN OVERRIDES";
+constexpr std::string_view OVERRIDES_BEGIN = "BEGIN OVERRIDES";
 
 std::string get_line_data(const std::string& line) {
     size_t index = line.find(SPLITTER_CHAR);
@@ -94,10 +94,12 @@ Mod Mod::deserialise(std::istream& stream) {
                                          line);
             }
 
-            mod.setOverride(tokens[1], std::move(override));
+            mod.setOverride(tokens[1], override);
 
             continue;
-        } else if (line == OVERRIDES_BEGIN) {
+        }
+
+        if (line == OVERRIDES_BEGIN) {
             processing_overrides = true;
             continue;
         }
@@ -107,7 +109,9 @@ Mod Mod::deserialise(std::istream& stream) {
             mod.name = data;
 
             continue;
-        } else if (line.starts_with(DATA_DIRECTORY)) {
+        }
+
+        if (line.starts_with(DATA_DIRECTORY)) {
             auto path = fs::path(data);
 
             if (!fs::exists(path)) {
@@ -120,7 +124,7 @@ Mod Mod::deserialise(std::istream& stream) {
             continue;
         }
 
-        else if (line.starts_with(GAME_VERSION)) {
+        if (line.starts_with(GAME_VERSION)) {
             try {
                 mod.game_version = std::stoi(data);
             } catch (std::invalid_argument& e) {

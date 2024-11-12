@@ -6,6 +6,9 @@
 #include <vector>
 
 #include "SD9File.h"
+#include "audio/SoundFile.h"
+
+constexpr float STARTING_VOLUME_RATIO = 0.2;
 
 using std::string;
 
@@ -14,8 +17,6 @@ using u16 = unsigned short;
 using u8 = unsigned char;
 using i8 = char;
 using i16 = short;
-
-using VolumeType = double;
 
 union AudioFrame {
     struct {
@@ -47,13 +48,13 @@ struct StereoPreamble {
 
 class Block {
    public:
-    Block(StereoPreamble preamble);
+    explicit Block(StereoPreamble preamble);
     ~Block();
 
-    StereoPreamble getPreamble() const;
+    [[nodiscard]] StereoPreamble getPreamble() const;
 
     void insertAudioFrame(AudioFrame *af);
-    const vector<AudioFrame *> &getAudioFrames() const;
+    [[nodiscard]] const vector<AudioFrame *> &getAudioFrames() const;
 
    private:
     StereoPreamble m_preamble;
@@ -64,51 +65,51 @@ class ADPCMData {
     friend class PCMData;
 
    public:
-    ADPCMData(fs::path filepath);
+    explicit ADPCMData(fs::path filepath);
 
-    const vector<Block *> getBlocks() const;
+    [[nodiscard]] const vector<Block *> getBlocks() const;
 
-    short *getLCoefs() const;
-    short *getRCoefs() const;
-    size_t getCoefCount() const;
+    [[nodiscard]] short *getLCoefs() const;
+    [[nodiscard]] short *getRCoefs() const;
+    [[nodiscard]] size_t getCoefCount() const;
 
-    u16 getSamplesPerBlock() const;
+    [[nodiscard]] u16 getSamplesPerBlock() const;
 
    private:
     i8 sd9bytes[SD9_HEADER_SIZE];
     struct {
         i8 riffstr[4] = {'R', 'I', 'F', 'F'};
-        u32 dataSize;
+        u32 dataSize{};
         i8 formatString[4] = {'W', 'A', 'V', 'E'};
     } riffChunk;
 
     struct {
         u8 fmtString[4] = {'f', 'm', 't', ' '};
-        u32 chunkSize;
-        u16 formatTag;
-        u16 channels;
-        u32 samplesPerSecond;
-        u32 avrgBytesPerSecond;
+        u32 chunkSize{};
+        u16 formatTag{};
+        u16 channels{};
+        u32 samplesPerSecond{};
+        u32 avrgBytesPerSecond{};
 
         // (BE) Size of a single frame, equal to (channels * bits per sample) /
         // 8, 1 byte for MS ADPCM
-        u16 blockAlign;
+        u16 blockAlign{};
 
         // (BE) 4 for MS ADPCM
-        u16 bitsPerSample;
+        u16 bitsPerSample{};
 
         // (LE) Extra data size (32 for MS ADPCM)
-        u16 cbSize;
+        u16 cbSize{};
 
         // Min 32, Max 512
-        u16 samplesPerBlock;
+        u16 samplesPerBlock{};
 
         // Almost always 7
-        u16 numCoefficients;
+        u16 numCoefficients{};
 
         // Signed decoding coefficients, going L1, R1, L2, R2, etc etc
-        short *l_coefs;
-        short *r_coefs;
+        short *l_coefs{};
+        short *r_coefs{};
 
     } fmtChunk;
 
@@ -140,7 +141,7 @@ struct PlaybackSet {
     SD9File sd9;
     size_t next_frame = 0;
     size_t total_frames;
-    double volume{1};
+    volume_t volume{1};
 
     // Leave as copy
     explicit PlaybackSet(const SD9File &sd9_file)
@@ -168,17 +169,18 @@ class AudioHandler {
     static void Start();
     static void Stop();
 
-    static void SetVolume(VolumeType new_volume) {
-        auto normalised_volume = new_volume / 100;
-        if (normalised_volume < 0 || normalised_volume > 100) {
+    static volume_t GetVolume() { return _volume; }
+
+    static void SetVolume(volume_t new_volume) {
+        if (new_volume < 0 || new_volume > 1.0F) {
             std::cerr << "Unable to set volume to new value " << new_volume
                       << ". Keeping old value of " << _volume << "."
                       << std::endl;
         }
 
-        _volume = normalised_volume;
+        _volume = new_volume;
         if (_playbackSet) {
-            _playbackSet->volume = normalised_volume;
+            _playbackSet->volume = new_volume;
         }
     }
 
@@ -186,7 +188,7 @@ class AudioHandler {
 
    private:
     static PaStream *_stream;
-    inline static VolumeType _volume{0};
+    inline static volume_t _volume{STARTING_VOLUME_RATIO};
 
     inline static std::unique_ptr<PlaybackSet> _playbackSet = nullptr;
 
@@ -203,31 +205,31 @@ class AudioHandler {
 
 class PCMData {
    public:
-    PCMData(const ADPCMData &adpcm);
+    explicit PCMData(const ADPCMData &adpcm);
     PCMBufferManager &getBufferManager();
 
    private:
     i8 sd9bytes[SD9_HEADER_SIZE];
     struct {
         i8 riffstr[4] = {'R', 'I', 'F', 'F'};
-        u32 dataSize;
+        u32 dataSize{};
         i8 formatString[4] = {'W', 'A', 'V', 'E'};
     } riffChunk;
 
     struct {
         u8 fmtString[4] = {'f', 'm', 't', ' '};
-        u32 chunkSize;
-        u16 formatTag;
-        u16 channels;
-        u32 samplesPerSecond;
-        u32 avrgBytesPerSecond;
+        u32 chunkSize{};
+        u16 formatTag{};
+        u16 channels{};
+        u32 samplesPerSecond{};
+        u32 avrgBytesPerSecond{};
 
         // (BE) Size of a single frame, equal to (channels * bits per sample) /
         // 8, 1 byte for MS ADPCM
-        u16 blockAlign;
+        u16 blockAlign{};
 
         // (BE) 16bit for PCM
-        u16 bitsPerSample = 16;
+        u16 bitsPerSample = SD9_BITRATE;
 
         // (LE) Extra data size (0 when converting from ADPCM)
         u16 cbSize = 0;

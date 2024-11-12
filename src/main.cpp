@@ -7,7 +7,7 @@ class SkinMakerApp : public wxApp {
     bool OnInit() override;
 
    private:
-    MainFrame* _mainFrame = nullptr;
+    std::unique_ptr<MainFrame> _mainFrame{nullptr};
 };
 
 wxIMPLEMENT_APP(SkinMakerApp);
@@ -21,7 +21,7 @@ bool SkinMakerApp::OnInit() {
         exit(EXIT_FAILURE);
     }
 
-    _mainFrame = new MainFrame();
+    _mainFrame = std::make_unique<MainFrame>();
     _mainFrame->Show(true);
 
     if (this->argc == 2) {
