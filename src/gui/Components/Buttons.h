@@ -11,6 +11,14 @@ namespace Buttons {
         auto reset_lambda{[callback](wxCommandEvent&) { callback(); }};
         button->Bind(wxEVT_BUTTON, reset_lambda);
 
+        auto rerender_lambda{[button](wxShowEvent&) {
+            auto* parent{button->GetParent()};
+            if (parent != nullptr) {
+                parent->Layout();
+            }
+        }};
+        button->Bind(wxEVT_SHOW, rerender_lambda);
+
         return button;
     };
 };  // namespace Buttons

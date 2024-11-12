@@ -8,8 +8,8 @@ TextOverrideBox::TextOverrideBox(wxWindow* parent, std::string label_text,
                                  const std::string& form_value,
                                  std::optional<std::string>& modifiable)
     : CallbackBox(parent, form_value) {
-    _baseValue = form_value;
-    _newValue = &modifiable;
+    baseValue_ = form_value;
+    newValue_ = &modifiable;
 
     auto* label = new wxStaticText(parent, wxID_ANY, label_text);
     this->Add(label);
@@ -23,11 +23,11 @@ TextOverrideBox::TextOverrideBox(wxWindow* parent, std::string label_text,
 
     this->AddStretchSpacer();
 
-    auto reset_lambda{[this]() { *(this->_newValue) = std::nullopt; }};
+    auto reset_lambda{[this]() { *(this->newValue_) = std::nullopt; }};
     this->Add(Buttons::Reset(reset_lambda, parent));
 }
 
 void TextOverrideBox::onValueChanged(const wxCommandEvent& event) {
     wxString val = event.GetString();
-    *_newValue = val.ToStdString();
+    *newValue_ = val.ToStdString();
 }

@@ -15,7 +15,4 @@ class TextOverrideBox : public CallbackBox<text_callback_t> {
 
    private:
     void onValueChanged(const wxCommandEvent& event) override;
-
-    // std::string _value*    declared by base
-    // std::optional<std::string>* _newValue    declared by base
 };
