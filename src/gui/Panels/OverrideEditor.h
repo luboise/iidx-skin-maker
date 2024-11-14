@@ -7,7 +7,7 @@
 class OverrideEditor : public wxFlexGridSizer, public ModObserver {
    public:
     explicit OverrideEditor(wxWindow* parent, Override* override = nullptr)
-        : wxFlexGridSizer(0, 3, 5, 5) {
+        : wxFlexGridSizer(0, 3, 10, 10) {
         this->AddGrowableCol(1);
         onOverrideUpdated(override);
     };
