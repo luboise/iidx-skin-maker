@@ -18,9 +18,15 @@ class NumberOverrideBox : public CallbackBox<T> {
    public:
     NumberOverrideBox(wxWindow* parent, const std::string& label_text,
                       const T& form_value, std::optional<T>& modifiable)
-        : CallbackBox<T>(parent, form_value),
-          textCtrl_(
-              new wxTextCtrl(parent, wxID_ANY, std::to_string(form_value))) {
+        : CallbackBox<T>(parent, form_value) {
+        T initial_value{modifiable.has_value() ? modifiable.value()
+                                               : form_value};
+
+        auto* text_ctrl{
+            new wxTextCtrl(parent, wxID_ANY, std::to_string(initial_value))};
+
+        this->textCtrl_ = text_ctrl;
+
         this->baseValue_ = form_value;
         this->newValue_ = &modifiable;
 
