@@ -1,4 +1,5 @@
 #include "ModLoopChanger.h"
+#include <wx/event.h>
 
 #include "audio/SD9File.h"
 #include "gui/Forms/CallbackBoxes/NumberOverrideBox.h"
@@ -19,18 +20,23 @@ ModLoopChanger::ModLoopChanger(wxWindow* parent, const SD9Info& base_info,
 
     auto* new_checkbox{new wxCheckBox(parent, wxID_ANY, "")};
     _enabledCheckbox = new_checkbox;
-
     _enabledCheckbox->SetValue(base_info.loop_enabled != 0);
 
     enabled_sizer->Add(_enabledCheckbox);
 
-    wxSizer* loop_start_sizer{new NumberOverrideBox(
+    auto* loop_start_sizer{new NumberOverrideBox(
         parent, "Loop Start", _info.loop_start_byte_offset,
         override_info.loop_start_byte_offset)};
 
-    wxSizer* loop_end_sizer{
+    auto* loop_end_sizer{
         new NumberOverrideBox(parent, "Loop Start", _info.loop_end_byte_offset,
                               override_info.loop_end_byte_offset)};
+
+    _enabledCheckbox->Bind(wxEVT_CHECKBOX, [loop_start_sizer, loop_end_sizer](
+                                               wxCommandEvent& event) {
+        loop_start_sizer->enable(event.IsChecked());
+        loop_end_sizer->enable(event.IsChecked());
+    });
 
     // 0, info->audio_size);   // Bounds of number callback box ,implement later
 

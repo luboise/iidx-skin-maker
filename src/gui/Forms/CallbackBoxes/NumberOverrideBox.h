@@ -88,4 +88,7 @@ int val = event.GetInt();
         bool value_is_overridden{this->newValue_->has_value()};
         this->resetButton_->Show(value_is_overridden);
     }
+
+    void onDisable() override { this->textCtrl_->Disable(); }
+    void onEnable() override { this->textCtrl_->Enable(); }
 };

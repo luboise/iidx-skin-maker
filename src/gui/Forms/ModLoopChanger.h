@@ -16,4 +16,6 @@ class ModLoopChanger : public wxBoxSizer {
 
     wxTextCtrl* _dataDirPreview = nullptr;
     wxCheckBox* _enabledCheckbox = nullptr;
+
+    void refreshControls();
 };
