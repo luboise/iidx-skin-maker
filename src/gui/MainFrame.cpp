@@ -29,10 +29,10 @@ MainFrame::MainFrame(wxWindow* parent)
     _editingPanel->SetSizer(editing_sizer);
 
     _fileDetailsSizer = std::make_unique<FileDetailsPanel>(editing_panel);
-    editing_sizer->Add(_fileDetailsSizer.get(), 1, wxEXPAND | wxALL, 0);
+    editing_sizer->Add(_fileDetailsSizer.get(), 0, wxEXPAND | wxALL, 5);
 
     auto* override_editor{new OverrideEditor(this)};
-    editing_sizer->Add(override_editor);
+    editing_sizer->Add(override_editor, 0, wxEXPAND | wxALL, 5);
 
     splitter->SplitVertically(_fileSection, editing_panel);
     splitter->SetMinimumPaneSize(200);

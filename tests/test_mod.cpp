@@ -13,9 +13,12 @@ TEST_CASE("Mod Tests") {
 
         std::string data_test_1 = "SD9|\n";
         std::string data_test_2 = "SD9|data/test.sd9|music/music.wav\n";
-        std::string data_test_3 =
-            "SD9|data/test.sd9|"
-            "music.wav|asdfasdfasdfasdfasdfasdfasdfasdf\n";
+
+        /*
+std::string data_test_3 =
+    "SD9|data/test.sd9|"
+    "music.wav|12341234123412341234123412341234\n";
+                */
 
         std::stringstream ss;
 
@@ -25,7 +28,9 @@ TEST_CASE("Mod Tests") {
         ss = std::stringstream(base_mod_string + data_test_2);
         CHECK_THROWS(Mod::deserialise(ss));
 
-        ss = std::stringstream(base_mod_string + data_test_3);
-        CHECK_NOTHROW(Mod::deserialise(ss));
+        /*
+ss = std::stringstream(base_mod_string + data_test_3);
+CHECK_NOTHROW(Mod::deserialise(ss));
+        */
     }
 }

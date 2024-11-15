@@ -1,12 +1,14 @@
 #pragma once
 
+#include <wx/sizer.h>
 #include "mod_manager/ModObserver.h"
 #include "mod_manager/Overrides/SD9Override.h"
 
-class OverrideEditor : public wxBoxSizer, public ModObserver {
+class OverrideEditor : public wxFlexGridSizer, public ModObserver {
    public:
     explicit OverrideEditor(wxWindow* parent, Override* override = nullptr)
-        : wxBoxSizer(wxVERTICAL) {
+        : wxFlexGridSizer(0, 3, 10, 10) {
+        this->AddGrowableCol(1);
         onOverrideUpdated(override);
     };
 

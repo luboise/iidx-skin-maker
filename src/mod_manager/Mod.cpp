@@ -68,8 +68,10 @@ Mod Mod::deserialise(std::istream& stream) {
             Override* override = nullptr;
 
             if (tokens[0] == SD9_TYPE) {
-                override =
-                    new SD9Override(tokens[1], SD9Info::from(tokens[3].data()));
+                auto overrideInfo{Utils::Struct::FromBinary<SD9InfoOverride>(
+                    tokens[3].data())};
+
+                override = new SD9Override(tokens[1], overrideInfo);
 
                 if (!fs::exists(tokens[2])) {
                     std::cerr << "Unable to process replacement path for "
