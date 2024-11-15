@@ -49,23 +49,6 @@ struct SD9Info {
 
     uint16_t unique_index = 0x0;  // 30-31
 
-    static SD9Info from(void* data) {
-        SD9Info info;
-        memcpy(&info, data, sizeof(SD9Info));
-
-        auto* char_pointer = (unsigned char*)info.header.data();
-        std::cout << "Outputting hex: \n";
-        for (auto group = 0; group < SD9_HEADER_SIZE / 8; group++) {
-            for (auto i = 0; i < 8; i++) {
-                std::cout << std::format("{:#0x} ",
-                                         *(char_pointer + 8 * group + i));
-            }
-            std::cout << std::endl;
-        }
-
-        return info;
-    };
-
     [[nodiscard]] bool isLooping() const { return this->loop_enabled != 0; }
 };
 

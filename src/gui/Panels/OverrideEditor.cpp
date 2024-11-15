@@ -1,25 +1,34 @@
 #include "OverrideEditor.h"
+#include <wx/gdicmn.h>
+#include <wx/gtk/slider.h>
+#include <wx/gtk/textctrl.h>
+#include <wx/slider.h>
+#include <limits>
+#include <optional>
 #include "gui/Components/Buttons.h"
 #include "gui/Forms/CallbackBoxes/NumberControl.h"
 #include "mod_manager/Overrides/SD9Override.h"
 
 #include "utils.h"
 
+template <typename T>
 struct OverrideUpdateSet {
     wxStaticText* label{nullptr};
-    wxTextCtrl* textCtrl{nullptr};
+    T* control{nullptr};
     wxButton* resetButton{nullptr};
 
     void addTo(wxSizer* sizer) const {
         sizer->Add(label, 0);
-        sizer->Add(textCtrl, 1, wxEXPAND);
+        sizer->Add(control, 1, wxEXPAND);
         sizer->Add(resetButton, 0, wxALIGN_RIGHT);
     }
 };
 
 template <typename T>
-OverrideUpdateSet createUpdateSet(wxWindow* parent, const wxString& labelText,
-                                  const T& value, std::optional<T>& override) {
+OverrideUpdateSet<wxTextCtrl> createUpdateSet(wxWindow* parent,
+                                              const wxString& labelText,
+                                              const T& value,
+                                              std::optional<T>& override) {
     auto* label{new wxStaticText(parent, wxID_ANY, labelText)};
     auto* control{new NumberControl(parent, value, override)};
 
@@ -28,6 +37,35 @@ OverrideUpdateSet createUpdateSet(wxWindow* parent, const wxString& labelText,
     };
     auto* reset_button{Buttons::Reset(reset_lambda, parent)};
     return {label, control, reset_button};
+};
+
+template <typename T>
+OverrideUpdateSet<wxSlider> createSliderSet(wxWindow* parent,
+                                            const wxString& labelText,
+                                            const T& value,
+                                            std::optional<T>& override) {
+    auto* label{new wxStaticText(parent, wxID_ANY, labelText)};
+
+    T initialValue{override.has_value() ? override.value() : value};
+    auto* slider{new wxSlider(
+        parent, wxID_ANY, initialValue, std::numeric_limits<T>::min(),
+        std::numeric_limits<T>::max(), wxDefaultPosition, wxDefaultSize,
+        wxSL_VALUE_LABEL | wxSL_MIN_MAX_LABELS | wxSL_INVERSE)};
+    slider->Bind(wxEVT_SLIDER, [&override, value](wxCommandEvent& event) {
+        T newValue = static_cast<T>(event.GetInt());
+
+        if (newValue == value) {
+            override.reset();
+            return;
+        }
+
+        override = newValue;
+    });
+
+    auto reset_lambda{[slider, value]() { slider->SetValue(value); }};
+    auto* reset_button{Buttons::Reset(reset_lambda, parent)};
+
+    return {label, slider, reset_button};
 };
 
 void OverrideEditor::onOverrideUpdated(Override* override) {
@@ -95,8 +133,11 @@ auto* temp_sizer_label{new wxStaticText(
         createUpdateSet(parent, "Loop End", base_info.loop_end_byte_offset,
                         overrideables.loop_end_byte_offset)};
 
-    new_checkbox->Bind(wxEVT_CHECKBOX, [start_ctrl = loopStartDetails.textCtrl,
-                                        end_ctrl = loopEndDetails.textCtrl](
+    OverrideUpdateSet sliderDetails{createSliderSet(
+        parent, "Volume", base_info.volume, overrideables.volume)};
+
+    new_checkbox->Bind(wxEVT_CHECKBOX, [start_ctrl = loopStartDetails.control,
+                                        end_ctrl = loopEndDetails.control](
                                            wxCommandEvent& event) {
         start_ctrl->Enable(event.IsChecked());
         end_ctrl->Enable(event.IsChecked());
@@ -109,6 +150,7 @@ constexpr auto PADDING_SIZE = 10;
 
 auto flags = wxSizerFlags().Expand().Border(wxALL, PADDING_SIZE).GetFlags();
     */
+    audio_index.addTo(this);
 
     this->Add(enabled_label);
     this->Add(new_checkbox);
@@ -117,7 +159,7 @@ auto flags = wxSizerFlags().Expand().Border(wxALL, PADDING_SIZE).GetFlags();
 
     loopStartDetails.addTo(this);
     loopEndDetails.addTo(this);
-    audio_index.addTo(this);
+    sliderDetails.addTo(this);
 
     /*
 auto* audio_index_ctrl{

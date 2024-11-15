@@ -37,7 +37,8 @@ struct SD9Replacement {
 class SD9Override : public Override {
    public:
     explicit SD9Override(fs::path in);
-    SD9Override(fs::path in, SD9Info info);
+    // SD9Override(fs::path in, SD9Info info);
+    SD9Override(fs::path in, SD9InfoOverride overrideInfo);
 
     std::string serialiseData() override;
     std::string getType() override { return SD9_TYPE; };

@@ -10,8 +10,9 @@
 
 using std::string;
 
-SD9Override::SD9Override(fs::path in, SD9Info info) : Override(std::move(in)) {
-    _replacementData.base_info = info;
+SD9Override::SD9Override(fs::path in, SD9InfoOverride overrideInfo)
+    : SD9Override(std::move(in)) {
+    _replacementData.override_info = overrideInfo;
 }
 
 SD9Override::SD9Override(fs::path in) : Override(std::move(in)) {
@@ -22,13 +23,16 @@ SD9Override::SD9Override(fs::path in) : Override(std::move(in)) {
 }
 
 std::string SD9Override::serialiseData() {
-    std::array<char, SD9_HEADER_SIZE> sd9_data{};
+    constexpr auto BUFFER_SIZE = sizeof(SD9InfoOverride);
 
-    memcpy(sd9_data.data(), &_replacementData.base_info, SD9_HEADER_SIZE);
+    std::array<char, BUFFER_SIZE> outputData{};
+
+    memcpy(outputData.data(), &_replacementData.override_info,
+           sizeof(typeof _replacementData.override_info));
 
     std::stringstream ss;
     ss << _replacementData.path.string() << OVERRIDE_SEP_CHAR
-       << std::string(sd9_data.data(), SD9_HEADER_SIZE);
+       << std::string(outputData.data(), BUFFER_SIZE);
 
     return ss.str();
 };

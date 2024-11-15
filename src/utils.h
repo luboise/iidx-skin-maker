@@ -22,4 +22,13 @@ namespace Utils {
         vector<std::string> Split(const std::string& in_string, char delimiter);
     }  // namespace String
 
+    namespace Struct {
+        template <typename T>
+        T FromBinary(void* data) {
+            T info{};
+            memcpy(&info, data, sizeof(T));
+
+            return info;
+        };
+    }  // namespace Struct
 }  // namespace Utils
