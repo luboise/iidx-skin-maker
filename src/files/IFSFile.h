@@ -13,9 +13,15 @@ enum class EncodingKeys : uint8_t {
 
 constexpr auto DEFAULT_ENCODING_KEY = EncodingKeys::CP932;
 
+// inverseEncodingKey = 0xFF ^ encodingKey
+
 struct IFSFile {
     uint8_t xmlSignature{XML_SIGNATURE};
     uint8_t isCompressed{0};
     uint8_t encodingKey{0};
     uint8_t inverseEncodingKey{0};
+    uint32_t nodeEnd{0};
+    uint32_t dataSize{0};
 };
+
+void parseIFSFile(const fs::path& path);
